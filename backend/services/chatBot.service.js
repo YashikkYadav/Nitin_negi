@@ -299,7 +299,8 @@ const chatBotQueryService = async (doctorId, query) => {
         doctorId: doctorObjectId,
         query: query,
         response: formattedText,
-        model: "gemini-2.5-flash",
+        // model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
       });
       await interaction.save();
     } catch (logError) {
