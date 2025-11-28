@@ -1,0 +1,272 @@
+.appointment-card,
+.appointment-header {
+    border-radius: 20px;
+    box-shadow: 0 1px 6px 0 rgb(0 0 0 / 5%) !important;
+    margin-top: 12px;
+}
+
+.appointment-date {
+    border-top: 1px solid #d4e0ed;
+    border-bottom: 1px solid #d4e0ed;
+    background-color: #e0e3e6;
+}
+
+.appointment-details {
+    display: flex;
+    justify-content: space-between;
+    padding: 30px 16px;
+    cursor: pointer;
+}
+
+.appointment-details .detail {
+    display: flex;
+    gap: 15px;
+    align-items: start;
+}
+
+.appointment-circle {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #8247f5;
+    margin-top: -7px;
+}
+
+.appointment-slots {
+    font-size: 15px;
+}
+
+.appointment-event {
+    display: flex;
+    font-size: 15px !important;
+    align-items: center;
+    gap: 5px;
+}
+
+.appointment-event h3 {
+    font-size: 15px !important;
+}
+
+.details {
+    color: #1a1a1a9c;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.v-tab {
+    color: #476788;
+    font-weight: 400;
+    text-transform: capitalize;
+}
+
+.v-tab--selected {
+    color: #0a2540;
+}
+
+.reached-list {
+    border-top: 1px solid #d4e0ed;
+    color: #476788;
+    text-align: center;
+}
+
+.no-appointments {
+    padding: 50px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.v-tabs {
+    border-bottom: 1px solid #d4e0ed;
+}
+
+.extra-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 30px;
+}
+
+.appointment-header {
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.appointment-btn {
+    border-radius: 6px;
+}
+
+.appointment-header p {
+    font-size: 12px;
+}
+
+.date-filter {
+    height: 48px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    color: #476788;
+    cursor: pointer;
+}
+
+.ant-picker-range .ant-picker-active-bar {
+    background: black;
+    height: 1px;
+}
+
+.dates {
+    border-bottom: 1px solid #d4e0ed;
+    font-size: 20px;
+}
+
+.date-container {
+    position: relative;
+    width: 100%;
+}
+
+.date-label {
+    background: white;
+    position: absolute;
+    top: -13px;
+    left: 13px;
+    padding: 0 5px;
+}
+
+.date-label label {
+    color: #747474 !important;
+    opacity: 0.87;
+    font-size: 13px;
+}
+
+.appointment .ant-picker {
+    padding: 0;
+}
+
+.appointment .ant-picker .ant-picker-input>input {
+    line-height: normal;
+    font-size: 14px;
+}
+
+.appointment .ant-picker-active-bar {
+    display: none;
+}
+
+.appointment-card .v-card-title {
+    padding: 10px 16px;
+    border-bottom: 1px solid #d4e0ed;
+}
+
+.special-case {
+    font-size: 13px;
+}
+
+.start-consultation .v-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 27.28px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #ECEDF2;
+}
+
+.start-consultation .label-title {
+    font-size: 14px !important;
+    font-weight: 600;
+    line-height: 19.1px;
+    color: #282A37 !important;
+    opacity: 1 !important;
+    margin-bottom: 10px;
+}
+
+.start-consultation .v-field__input {
+    min-height: 40px !important;
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+    color: #282A37 !important;
+    opacity: 1 !important;
+}
+
+.start-consultation .v-field {
+    border-radius: 8px !important;
+}
+
+.start-consultation .all-dates {
+    gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.start-consultation .all-dates .v-btn,
+.start-consultation .all-slots .v-btn {
+    box-shadow: none;
+    background-color: #F6F7F9;
+    border: 1px solid #ECEDF2;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+    color: #515978;
+    border-radius: 4px;
+    padding: 6px 10px !important;
+    text-transform: capitalize;
+}
+
+.start-consultation .all-dates .v-btn.active,
+.start-consultation .all-slots .v-btn.active {
+    background-color: #d4ebff;
+    border: 1px solid #385D7E;
+    color: #385D7E;
+}
+
+.start-consultation .all-slots {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.start-consultation .all-slots .v-btn {
+    text-transform: lowercase;
+    padding: 6px 16px !important;
+    min-width: 95px;
+}
+
+.start-consultation .footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    margin-top: 40px;
+    border-top: 1px solid #ECEDF2;
+}
+
+.start-consultation .error {
+    color: #b00020;
+    font-size: 0.75rem;
+    font-weight: 400;
+    grid-area: messages;
+    letter-spacing: 0.0333333333em;
+    line-height: normal;
+    min-height: 22px;
+    padding-top: 6px;
+    padding-left: 16px;
+}
+
+.selected-location .v-input__details {
+    display: none;
+}
+
+.bottom-form {
+    margin-top: 27px;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
