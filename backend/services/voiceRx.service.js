@@ -144,7 +144,6 @@ IMPORTANT OUTPUT RULES:
 RULES:
 - NEVER add new keys.
 - NEVER remove keys.
-- ALWAYS fill every field, even if the transcription does not contain details (use medically appropriate defaults).
 - OUTPUT MUST BE 100% VALID JSON — no text before or after.
         `,
       });
