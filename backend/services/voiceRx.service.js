@@ -10,8 +10,10 @@ class VoiceRxService {
       const audioBytes = fs.readFileSync(filePath).toString("base64");
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-001",
-        systemInstruction: "You are a medical transcription service. Always transcribe audio content and respond in English, regardless of the language spoken in the audio. Provide accurate transcriptions without any additional commentary.",
+        // model: "gemini-2.0-flash-001",
+        model: "gemini-2.5-flash",
+        systemInstruction:
+          "You are a medical transcription service. Always transcribe audio content and respond in English, regardless of the language spoken in the audio. Provide accurate transcriptions without any additional commentary.",
       });
 
       const result = await model.generateContent({
@@ -27,7 +29,7 @@ class VoiceRxService {
               },
               {
                 text: "Transcribe this audio exactly into text in English.",
-              }
+              },
             ],
           },
         ],
@@ -46,7 +48,8 @@ class VoiceRxService {
       }
 
       const modelForText = genAI.getGenerativeModel({
-        model: "gemini-2.5-pro",
+        // model: "gemini-2.5-pro",
+        model: "gemini-2.5-flash",
         systemInstruction: `
         You are a medical transcription and clinical structuring assistant.
 
