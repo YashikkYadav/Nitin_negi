@@ -285,6 +285,7 @@ const chatBotQueryService = async (doctorId, query) => {
 
     // Use Gemini 2.5 Flash model which supports up to 1 million tokens
     // const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" }); // working with this
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     const result = await model.generateContent(context);
     const response = await result.response;
@@ -299,8 +300,7 @@ const chatBotQueryService = async (doctorId, query) => {
         doctorId: doctorObjectId,
         query: query,
         response: formattedText,
-        // model: "gemini-2.5-flash",
-        model: "gemini-2.5-pro",
+        model: "gemini-2.5-flash",
       });
       await interaction.save();
     } catch (logError) {

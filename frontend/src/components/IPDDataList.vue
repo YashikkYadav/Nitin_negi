@@ -207,8 +207,31 @@ export default {
     const validIpdData = computed(() =>
       dateFilteredData.value.filter(item => item.patientId && item.patientId.fullName && item.patientId.fullName.trim() !== '')
     );
+    
+    // Add search filtering logic here
+    const searchedIpdData = computed(() => {
+      if (!search.value) return validIpdData.value;
+      
+      const searchTerm = search.value.toLowerCase().trim();
+      return validIpdData.value.filter(item => {
+        const patient = item.patientId;
+        if (!patient) return false;
+        
+        // Check patient name
+        if (patient.fullName && patient.fullName.toLowerCase().includes(searchTerm)) return true;
+        
+        // Check patient phone
+        if (patient.phone && patient.phone.includes(searchTerm)) return true;
+        
+        // Check patient UID
+        if (patient.uid && patient.uid.includes(searchTerm)) return true;
+        
+        return false;
+      });
+    });
+    
     const sortedIpdData = computed(() =>
-      [...validIpdData.value].sort((a, b) => new Date(b.dateOfAdmission) - new Date(a.dateOfAdmission))
+      [...searchedIpdData.value].sort((a, b) => new Date(b.dateOfAdmission) - new Date(a.dateOfAdmission))
     );
     const totalPages = computed(() => Math.ceil(sortedIpdData.value.length / pageSize.value) || 1);
     const totalRecords = computed(() => sortedIpdData.value.length);
@@ -220,12 +243,20 @@ export default {
 
     const fetchIPD = async () => {
       loading.value = true;
-      const res = await getAllIPD(search.value);
+      // Fetch all data since we're filtering client-side
+      const res = await getAllIPD('');
       ipdData.value = res.ipds || res;
       loading.value = false;
     };
 
-    watch([search, currentPage, pageSize], fetchIPD, { immediate: true });
+    // Watch for search changes separately to avoid resetting page
+    watch(search, () => {
+      fetchIPD();
+    });
+    
+    watch([currentPage, pageSize], () => {
+      fetchIPD();
+    }, { immediate: true });
 
     const goToPage = (page) => {
       if (page < 1 || page > totalPages.value) return;
@@ -350,6 +381,7 @@ export default {
       selectedIpdRecordId,
       openSurgicalPlan,
       handleSurgicalPlanSaved,
+      searchedIpdData,
     };
   },
 };

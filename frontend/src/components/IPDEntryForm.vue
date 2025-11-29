@@ -23,6 +23,9 @@
                 dense 
                 clearable 
                 @update:model-value="onPatientSelected"
+                v-model:search="patientSearch"
+                :loading="loadingPatients"
+                :no-data-text="patientSearch ? 'No patients found' : 'Start typing to search patients'"
                 class="flex-grow-1">
               </v-autocomplete>
 
@@ -106,7 +109,7 @@
 </template>
 
 <script>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { usePatientStore } from '@/store/PatientStore';
 import PatientAddEditModel from './PatientAddEditModel.vue';
 
@@ -142,6 +145,8 @@ export default {
     const stentRemoved = ref(false);
     const dialog = ref(props.dialog);
     const isEdit = ref(props.isEditModel || false);
+    // Add debounce timeout variable
+    let fetchPatientsTimeout;
 
     // Reset fields function
     const resetFields = () => {
@@ -201,6 +206,16 @@ export default {
       },
       { immediate: true }
     );
+    
+    // Clear search term when a patient is selected to prevent unwanted API calls
+    watch(selectedPatient, (newVal) => {
+      if (newVal) {
+        // Use nextTick to ensure the DOM is updated before clearing the search
+        setTimeout(() => {
+          patientSearch.value = '';
+        }, 0);
+      }
+    });
 
     const rules = {
       required: v => !!v || 'Required',
@@ -209,41 +224,90 @@ export default {
 
     const fetchPatients = async () => {
       loadingPatients.value = true;
-      const store = usePatientStore();
-      const res = await store.getAllPatientsMasterApiCall(1, 1000000, patientSearch.value);
-      if (res && res.patients) {
-        // Format patients to show both name and phone number in the dropdown
-        patients.value = res.patients.map(p => ({
-          title: `${p.fullName} (${p.phoneNumber})`,
-          value: p.fullName
-        }));
-        patientDetailsLookup.value = Object.fromEntries(res.patients.map(p => [p.fullName, p]));
-      } else {
+      try {
+        console.log('Fetching patients with search term:', patientSearch.value);
+        // Only fetch patients when there's a search term
+        if (!patientSearch.value || patientSearch.value.trim() === '') {
+          patients.value = [];
+          patientDetailsLookup.value = {};
+          loadingPatients.value = false;
+          return;
+        }
+        
+        const store = usePatientStore();
+        // Let the server handle all filtering with the search term
+        const res = await store.getAllPatientsMasterApiCall(1, 1000000, patientSearch.value);
+        console.log('API response:', res);
+        // Check if res has a 'patient' array (not 'patients')
+        if (res && res.patient && Array.isArray(res.patient)) {
+          console.log('First patient object:', res.patient[0]);
+          // Format patients to show both name and phone number in the dropdown
+          patients.value = res.patient.map(p => {
+            const patientData = p.patientId || p; // Use patientId if it exists, otherwise use p directly
+            return {
+              title: `${patientData.fullName} (${patientData.phone || patientData.phoneNumber || ''})`,
+              value: patientData.fullName
+            };
+          });
+          // Also handle the lookup accordingly
+          patientDetailsLookup.value = Object.fromEntries(res.patient.map(p => {
+            const patientData = p.patientId || p;
+            return [patientData.fullName, patientData];
+          }));
+          console.log('Patients formatted:', patients.value);
+        } else {
+          patients.value = [];
+          patientDetailsLookup.value = {};
+        }
+      } catch (error) {
+        console.error('Error fetching patients:', error);
         patients.value = [];
         patientDetailsLookup.value = {};
       }
       loadingPatients.value = false;
     };
-    watch(patientSearch, fetchPatients, { immediate: true });
-    onMounted(() => { fetchPatients(); });
+    // Add debounce to prevent too many API calls
+    watch(patientSearch, () => {
+      clearTimeout(fetchPatientsTimeout);
+      fetchPatientsTimeout = setTimeout(() => {
+        fetchPatients();
+      }, 300); // 300ms debounce for server-side filtering
+    });
+    // Remove the initial fetch since we don't want to fetch all patients
+    
+    onBeforeUnmount(() => {
+      if (fetchPatientsTimeout) {
+        clearTimeout(fetchPatientsTimeout);
+      }
+    });
 
     const onPatientSelected = (patientName) => {
-   
+      console.log('Patient selected:', patientName);
+      console.log('Patient details lookup:', patientDetailsLookup.value);
       const details = patientDetailsLookup.value[patientName];
       if (details) {
-        phoneNumber.value = details.phoneNumber || '';
+        console.log('Found patient details:', details);
+        phoneNumber.value = details.phone || details.phoneNumber || '';
         age.value = details.age || '';
         gender.value = details.gender || '';
       } else {
+        console.log('No patient details found for:', patientName);
         phoneNumber.value = '';
         age.value = '';
         gender.value = '';
       }
+      // Don't clear the search term here, let the autocomplete handle it properly
+      // patientSearch.value = '';
     };
 
     const handleSubmit = async () => {
+      console.log('Submitting form with selected patient:', selectedPatient.value);
+      console.log('Patient details lookup:', patientDetailsLookup.value);
+      const patientDetails = patientDetailsLookup.value[selectedPatient.value];
+      console.log('Found patient details:', patientDetails);
+      
       emit('entry-saved', {
-        patientId: patientDetailsLookup.value[selectedPatient.value]?._id ||
+        patientId: patientDetails?._id ||
           (props.entry && props.entry.patientId && typeof props.entry.patientId === 'string' ? props.entry.patientId : undefined),
         dateOfAdmission: dateOfAdmission.value || null,
         category: category.value || null,
