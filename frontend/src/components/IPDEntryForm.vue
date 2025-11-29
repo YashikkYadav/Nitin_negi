@@ -237,10 +237,10 @@ export default {
         const store = usePatientStore();
         // Let the server handle all filtering with the search term
         const res = await store.getAllPatientsMasterApiCall(1, 1000000, patientSearch.value);
-        console.log('API response:', res);
+        // console.log('API response:', res);
         // Check if res has a 'patient' array (not 'patients')
         if (res && res.patient && Array.isArray(res.patient)) {
-          console.log('First patient object:', res.patient[0]);
+          // console.log('First patient object:', res.patient[0]);
           // Format patients to show both name and phone number in the dropdown
           patients.value = res.patient.map(p => {
             const patientData = p.patientId || p; // Use patientId if it exists, otherwise use p directly
@@ -254,7 +254,7 @@ export default {
             const patientData = p.patientId || p;
             return [patientData.fullName, patientData];
           }));
-          console.log('Patients formatted:', patients.value);
+          // console.log('Patients formatted:', patients.value);
         } else {
           patients.value = [];
           patientDetailsLookup.value = {};
@@ -282,11 +282,12 @@ export default {
     });
 
     const onPatientSelected = (patientName) => {
-      console.log('Patient selected:', patientName);
-      console.log('Patient details lookup:', patientDetailsLookup.value);
+      console.log('Patient selected:');
+      // console.log('Patient selected:', patientName);
+      // console.log('Patient details lookup:', patientDetailsLookup.value);
       const details = patientDetailsLookup.value[patientName];
       if (details) {
-        console.log('Found patient details:', details);
+        // console.log('Found patient details:', details);
         phoneNumber.value = details.phone || details.phoneNumber || '';
         age.value = details.age || '';
         gender.value = details.gender || '';
