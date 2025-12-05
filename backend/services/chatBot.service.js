@@ -112,34 +112,47 @@ const chatBotQueryService = async (doctorId, query) => {
 
     // Get doctor's patients, appointments, invoices, prescriptions, and IPD data
     const patientIds = await getDoctorPatientIds(doctorObjectId);
-    const patients = await Patient.find({ _id: { $in: patientIds } });
+    const patients = await Patient.find({ _id: { $in: patientIds } })
+      .limit(100)
+      .sort({ createdAt: -1 });
 
     // For appointments and prescriptions, we can populate patient data
     const appointments = await Appointment.find({
       doctorId: doctorObjectId,
-    }).populate({
-      path: "patientId",
-      select: "fullName phoneNumber",
-      strictPopulate: false,
-    });
+    })
+      .limit(100)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "patientId",
+        select: "fullName phoneNumber",
+        strictPopulate: false,
+      });
 
     const prescriptions = await Prescription.find({
       doctorId: doctorObjectId,
-    }).populate({
-      path: "patientId",
-      select: "fullName phoneNumber",
-      strictPopulate: false,
-    });
+    })
+      .limit(100)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "patientId",
+        select: "fullName phoneNumber",
+        strictPopulate: false,
+      });
 
     // For invoices, we cannot populate patient data since there's no patientId field
-    const invoices = await Invoice.find({ doctorId: doctorObjectId });
+    const invoices = await Invoice.find({ doctorId: doctorObjectId })
+      .limit(100)
+      .sort({ createdAt: -1 });
 
     // For IPD, populate patient data
-    const ipds = await IPD.find({}).populate({
-      path: "patientId",
-      select: "fullName phoneNumber",
-      strictPopulate: false,
-    });
+    const ipds = await IPD.find({})
+      .populate({
+        path: "patientId",
+        select: "fullName phoneNumber",
+        strictPopulate: false,
+      })
+      .limit(100)
+      .sort({ createdAt: -1 });
 
     // Create context for Gemini with doctor's data
     const context = `
@@ -293,20 +306,6 @@ const chatBotQueryService = async (doctorId, query) => {
 
     // Format the response to remove markdown and improve readability
     const formattedText = formatAIResponse(text);
-
-    // Log the interaction
-    try {
-      const interaction = new ChatBotInteraction({
-        doctorId: doctorObjectId,
-        query: query,
-        response: formattedText,
-        model: "gemini-2.5-flash",
-      });
-      await interaction.save();
-    } catch (logError) {
-      console.error("Failed to log chatbot interaction:", logError);
-    }
-
     return {
       message: formattedText,
     };

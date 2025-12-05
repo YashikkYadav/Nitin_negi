@@ -129,7 +129,7 @@
               <section class="section" v-if="voiceRxResult.complaints && voiceRxResult.complaints.length">
                 <h4>Complaints</h4>
                 <ul>
-                  <li v-for="(complaint, i) in voiceRxResult.complaints" :key="i" :style="{ display: i === voiceRxResult.complaints.length - 1 ? 'none' : '' }">{{ complaint }}</li>
+                  <li v-for="(complaint, i) in voiceRxResult.complaints" :key="i" :style="{ display: i === voiceRxResult.complaints.length ? 'none' : '' }">{{ complaint }}</li>
                 </ul>
               </section>
               
@@ -137,7 +137,7 @@
               <section class="section" v-if="voiceRxResult.history && voiceRxResult.history.length">
                 <h4>History</h4>
                 <ul>
-                  <li v-for="(history, i) in voiceRxResult.history" :key="i" :style="{ display: i === voiceRxResult.history.length - 1 ? 'none' : '' }">{{ history }}</li>
+                  <li v-for="(history, i) in voiceRxResult.history" :key="i" :style="{ display: i === voiceRxResult.history.length? 'none' : '' }">{{ history }}</li>
                 </ul>
               </section>
               
@@ -183,7 +183,7 @@
               <section class="section" v-if="voiceRxResult.physicalExamination && voiceRxResult.physicalExamination.length">
                 <h4>Physical Examination</h4>
                 <ul>
-                  <li v-for="(exam, i) in voiceRxResult.physicalExamination" :key="i" :style="{ display: i === voiceRxResult.physicalExamination.length - 1 ? 'none' : '' }">{{ exam }}</li>
+                  <li v-for="(exam, i) in voiceRxResult.physicalExamination" :key="i" :style="{ display: i === voiceRxResult.physicalExamination.length ? 'none' : '' }">{{ exam }}</li>
                 </ul>
               </section>
               
@@ -229,7 +229,7 @@
               <section class="section" v-if="voiceRxResult.advice && voiceRxResult.advice.length">
                 <h4>Advice</h4>
                 <ul>
-                  <li v-for="(advice, i) in voiceRxResult.advice" :key="i" :style="{ display: i === voiceRxResult.advice.length - 1 ? 'none' : '' }">{{ advice }}</li>
+                  <li v-for="(advice, i) in voiceRxResult.advice" :key="i" :style="{ display: i === voiceRxResult.advice.length ? 'none' : '' }">{{ advice }}</li>
                 </ul>
               </section>
               
@@ -1334,12 +1334,15 @@
     </v-row>
 
     <v-row>
-      <v-col v-for="record in healthRecords" :key="record.id" cols="12" md="6">
+      <v-col v-for="record in healthRecords" :key="record.id" cols="12" sm="6" md="4" lg="3">
         <v-card class="health-record-card mb-4">
           <v-card-title>
             <span class="font-weight-bold">Document:</span>
             <v-btn icon @click="deleteFile(record, 'health')" class="float-right">
               <v-icon color="red">mdi-delete</v-icon>
+            </v-btn>
+             <v-btn icon @click="viewFile(record.fileUrl)" class="float-right ml-2 mt-16">
+              <v-icon color="blue">mdi-eye</v-icon>
             </v-btn>
           </v-card-title>
           <v-card-text>
@@ -1362,12 +1365,15 @@
     </v-row>
 
     <v-row>
-      <v-col v-for="record in ipdRecords" :key="record.id" cols="12" md="6">
+      <v-col v-for="record in ipdRecords" :key="record.id" cols="12" sm="6" md="4" lg="3">
         <v-card class="record-card mb-4">
-          <v-card-title>
+          <v-card-title >
             <span class="font-weight-bold">Document:</span>
             <v-btn icon @click="deleteFile(record, 'ipd')" class="float-right">
               <v-icon color="red">mdi-delete</v-icon>
+            </v-btn>
+            <v-btn icon @click="viewFile(record.fileUrl)" class="float-right ml-2 mt-16">
+              <v-icon color="blue">mdi-eye</v-icon>
             </v-btn>
           </v-card-title>
           <v-card-text>
@@ -1390,12 +1396,15 @@
     </v-row>
 
     <v-row>
-      <v-col v-for="record in invoiceRecords" :key="record.id" cols="12" md="6">
+      <v-col v-for="record in invoiceRecords" :key="record.id" cols="12" sm="6" md="4" lg="3">
         <v-card class="record-card mb-4">
           <v-card-title>
             <span class="font-weight-bold">Document:</span>
             <v-btn icon @click="deleteFile(record, 'invoice')" class="float-right">
               <v-icon color="red">mdi-delete</v-icon>
+            </v-btn>
+             <v-btn icon @click="viewFile(record.fileUrl)" class="float-right ml-2 mt-16">
+              <v-icon color="blue">mdi-eye</v-icon>
             </v-btn>
           </v-card-title>
           <v-card-text>
@@ -1509,6 +1518,19 @@
     <past-prescription-model :commonModel="isPastPrescriptionModalOpen"
       @close-dialog="isPastPrescriptionModalOpen = false" @actions="DeleteSection" title="Delete Section"
       description="Are you sure you want to delete section?" :data="pastData" />
+    <!-- Document Preview Dialog -->
+    <v-dialog v-model="previewDialog" width="60vw" height="80vh">
+      <v-card style="height: 80vh; display: flex; flex-direction: column;">
+        <v-card-title class="headline">Document Preview</v-card-title>
+        <v-card-text style="flex: 1; overflow: hidden; padding: 0;">
+          <iframe :src="previewFileUrl" width="100%" height="100%" style="border: none;background-size: contain; "></iframe>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="previewDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -1653,6 +1675,9 @@ export default {
       isProcessing: false, // Added to track file processing state
       voiceRxResult: null,
       mediaRecorder: null,
+      // Document preview properties
+      previewDialog: false,
+      previewFileUrl: '',
     };
   },
   mounted() {
@@ -2615,6 +2640,11 @@ export default {
     formatedDate(date) {
       return getDateFormate(date);
     },
+    viewFile(fileUrl) {
+      // Set the file URL and open the preview dialog
+      this.previewFileUrl = fileUrl;
+      this.previewDialog = true;
+    },
     
     // VoiceRx methods
     async startRecording() {
@@ -2690,7 +2720,7 @@ export default {
         
         // Call the transcribe API
         const result = await voiceRxStore.transcribeAudioApiCall(audioFile);
-        
+          console.log('VoiceRx Result:', result);
         if (result.error) {
           uiStore.openNotificationMessage(result.error, "", "error");
         } else if (result.status === 'success' && result.prescription) {
@@ -2749,6 +2779,7 @@ export default {
         
         // Call the transcribe API
         const result = await voiceRxStore.transcribeAudioApiCall(file);
+        console.log('VoiceRx Result:', result);
 
         if (result.error) {
           uiStore.openNotificationMessage(result.error, "", "error");

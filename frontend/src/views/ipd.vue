@@ -122,7 +122,7 @@ export default {
     const handleProcedureSaved = async (entry) => {
       try {
         if (!entry.patientUid) {
-          throw new Error('Patient UID is required for procedure records');
+          throw new Error('Patient identifier is required for procedure records');
         }
         await createProcedure(entry);
         await fetchProcedureData();

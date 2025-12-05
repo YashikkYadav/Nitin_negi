@@ -20,7 +20,7 @@
               <span v-if="message.sender === 'bot'" v-html="formatBotMessage(message.text)"></span>
               <span v-else>{{ message.text }}</span>
             </div>
-            <div class="timestamp">{{ formatTime(message.timestamp) }}</div>
+            <div class="timestamp text-black">{{ formatTime(message.timestamp) }}</div>
           </div>
           
           <div v-if="loading" class="message bot">
