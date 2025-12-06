@@ -30,6 +30,8 @@
         <v-icon left>mdi-microphone</v-icon>
         Start VoiceRx
       </v-btn>
+      <v-btn class="saaro-btn" color="primary" @click="loadLastPrescription">Load Last Prescription</v-btn>
+      <v-btn class="saaro-btn" color="primary" @click="clearAll()">Clear Prescription</v-btn>
     </div>
     
     <!-- VoiceRx Modal -->
@@ -1302,7 +1304,8 @@
     </template>
 
     <!-- Past Prescriptions Section -->
-    <h4 class="section-title mb-5 prescription-card-heading">Past Prescriptions</h4>
+    <h4 class="section-title mb-5 prescription-card-heading">Past Prescriptions </h4>
+    
     <v-row>
       <v-col v-for="prescription in pastPrescriptions" :key="prescription.id" cols="12" md="6">
         <v-card class="prescription-card mb-4" @click="pastPrescriptionDialogHandle(prescription.id)" large>
@@ -1519,18 +1522,40 @@
       @close-dialog="isPastPrescriptionModalOpen = false" @actions="DeleteSection" title="Delete Section"
       description="Are you sure you want to delete section?" :data="pastData" />
     <!-- Document Preview Dialog -->
-    <v-dialog v-model="previewDialog" width="60vw" height="80vh">
-      <v-card style="height: 80vh; display: flex; flex-direction: column;">
-        <v-card-title class="headline">Document Preview</v-card-title>
-        <v-card-text style="flex: 1; overflow: hidden; padding: 0;">
-          <iframe :src="previewFileUrl" width="100%" height="100%" style="border: none;background-size: contain; "></iframe>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="previewDialog = false">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <v-dialog v-model="previewDialog" width="75vw" max-height="80vh">
+  <v-card style="display: flex; flex-direction: column; height: 80vh;">
+    
+    <v-card-title class="headline">
+      Document Preview
+    </v-card-title>
+
+    <!-- SCROLLABLE AREA -->
+    <v-card-text
+      style="
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 10px;
+      "
+    >
+      <img
+        :src="previewFileUrl"
+        style="
+          width: 100%;        /* Fill width */
+          height: auto;       /* Keep aspect ratio */
+          display: block;
+        "
+      />
+    </v-card-text>
+
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" text @click="previewDialog = false">Close</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
+
   </v-container>
 </template>
 
@@ -2425,6 +2450,111 @@ export default {
 
       this.isPastPrescriptionModalOpen = true;
     },
+    loadLastPrescription() {
+      // Check if there are any past prescriptions
+      if (!this.pastPrescriptions || this.pastPrescriptions.length === 0) {
+        alert('No past prescriptions found!');
+        return;
+      }
+
+      // Get the most recent prescription (first one in the array as they are sorted by date)
+      const lastPrescription = this.pastPrescriptions[0];
+      const fullPrescriptionData = this.pastPrescriptionsAllData.find(item => item._id === lastPrescription.id);
+
+      if (!fullPrescriptionData) {
+        alert('Could not load prescription data!');
+        return;
+      }
+
+      // Load the prescription data into the form
+      this.loadPrescriptionData(fullPrescriptionData);
+    },
+    loadPrescriptionData(prescriptionData) {
+      // Load vitals
+      this.vitals.bp = prescriptionData.bloodPressure || '';
+      this.vitals.pulse = prescriptionData.pulse || '';
+      this.vitals.height = prescriptionData.height || '';
+      this.vitals.weight = prescriptionData.weight || '';
+      this.vitals.temperature = prescriptionData.temperature || '';
+      this.vitals.painScore = prescriptionData.painScore || '';
+
+      // Load complaints
+      this.complaintsList = prescriptionData.complaints?.length ? 
+        prescriptionData.complaints.map(complaint => ({ name: complaint })) : 
+        [{ name: '' }];
+
+      // Load history
+      this.historyList = prescriptionData.history?.length ? 
+        prescriptionData.history.map(history => ({ name: history })) : 
+        [{ name: '' }];
+
+      // Load physical examination
+      this.physicalExamList = prescriptionData.physicalExamination?.length ? 
+        prescriptionData.physicalExamination.map(exam => ({ name: exam })) : 
+        [{ name: '' }];
+
+      // Load diagnosis
+      this.diagnosisList = prescriptionData.diagnosis?.length ? 
+        prescriptionData.diagnosis.map(diag => ({ type: diag.type, details: diag.details })) : 
+        [{ type: '', details: '' }];
+
+      // Load medicines
+      this.medications = prescriptionData.medications?.length ? 
+        prescriptionData.medications.map(med => ({
+          name: med.name,
+          dosage: med.dosage,
+          frequency: med.frequency,
+          duration: med.duration,
+          notes: med.notes,
+          composition: med.composition || ''
+        })) : 
+        [{ name: '', dosage: '', frequency: '', duration: '', notes: '', composition: '' }];
+
+      // Load advice
+      this.adviceList = prescriptionData.advices?.length ? 
+        prescriptionData.advices.map(advice => ({ name: advice })) : 
+        [{ name: '' }];
+
+      // Load investigation advice
+      this.investigationAdviceList = prescriptionData.investigationsAdviced?.length ? 
+        prescriptionData.investigationsAdviced.map(inv => ({ name: inv.name, details: inv.details })) : 
+        [{ name: '', details: '' }];
+
+      // Load other fields
+      this.provisional = prescriptionData.provisional || '';
+      this.followUpDays = prescriptionData.followUpDays || '';
+      this.followUpDate = prescriptionData.followUpDate || '';
+      this.tags = prescriptionData.tags || '';
+
+      // Load drug allergy
+      this.drugAllergy = prescriptionData.drugAllergy?.length ? 
+        prescriptionData.drugAllergy.map(allergy => ({ name: allergy.name, details: allergy.details })) : 
+        [{ name: '', details: '' }];
+
+      // Load drug history
+      this.drugHistory = prescriptionData.drugHistory?.length ? 
+        prescriptionData.drugHistory.map(history => ({ name: history.name, details: history.details })) : 
+        [{ name: '', details: '' }];
+
+      // Load antiplatelet
+      this.antiplatlet = prescriptionData.antiplatlet?.length ? 
+        prescriptionData.antiplatlet.map(anti => ({ name: anti.name, details: anti.details })) : 
+        [{ name: '', details: '' }];
+
+      // Load previous surgery
+      this.previousSurgery = prescriptionData.previousSurgery || '';
+
+      // Load recent investigation
+      this.recentInvestigation = prescriptionData.recentInvestigation || '';
+
+      // Load implant
+      this.implant = prescriptionData.implant?.length ? 
+        prescriptionData.implant.map(imp => ({ name: imp.name, removalDate: imp.removalDate })) : 
+        [{ name: '', removalDate: '' }];
+
+      // Show success message
+      useUiStore().openNotificationMessage('Last prescription loaded successfully!');
+    },
     pdfDialogHandle(item) {
       this.pdfUrl = `${import.meta.env.VITE_SERVER_URL}/public/prescriptions/prescription_${item.id}.pdf`;
       this.pdfDialog = true;
@@ -2695,7 +2825,7 @@ export default {
         
         // Update UI
         const uiStore = useUiStore();
-        uiStore.openNotificationMessage('Recording started... Speak now. Click "Stop Recording" to finish early, or wait for the automatic stop after 10 seconds.', "", "info");
+        uiStore.openNotificationMessage('Recording started... Speak now. Click "Stop Recording" to finish early,');
         
       } catch (error) {
         this.isRecording = false;
