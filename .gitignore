@@ -26,5 +26,5 @@ pnpm-debug.log*
 /frontend/.env
 /frontend/dist
 .env
-
+/backend/public
 *.log
