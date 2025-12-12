@@ -83,18 +83,16 @@
         </div>
       </div>
      
-      <v-data-table
+      <v-data-table-server
         :headers="headers"
         :items="pagedData"
         :loading="loading"
-        :items-per-page="pageSize"
-        :page="currentPage"
-        @update:items-per-page="updatePageSize"
-        @update:page="goToPage"
         class="elevation-1"
-        :footer-props="{
-          itemsPerPageOptions: pageSizeOptions
-        }"
+        :page="currentPage"
+        :items-length="totalRecords"
+        :items-per-page="pageSize"
+        @update:page="goToPage"
+        @update:items-per-page="updatePageSize"
       >
         <template v-slot:[`item.patientName`]="{ item }">
           <span class="cell-name">{{ item.patientId?.fullName || '-' }}</span>
@@ -125,7 +123,7 @@
             </v-btn>
           </div>
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </v-card>
   </v-container>
 </template>
@@ -207,6 +205,7 @@ export default {
         (item.procedureName && item.procedureName.toLowerCase().includes(searchTerm))
       );
     });
+    
     const sortedTentativeSurgeryData = computed(() =>
       [...searchedTentativeSurgeryData.value].sort((a, b) => {
         const da = a.dateOfSurgery ? new Date(a.dateOfSurgery) : new Date(0);
@@ -215,8 +214,9 @@ export default {
       })
     );
 
-    const totalPages = computed(() => Math.ceil(sortedTentativeSurgeryData.value.length / pageSize.value) || 1);
+    // Computed properties for pagination
     const totalRecords = computed(() => sortedTentativeSurgeryData.value.length);
+    const totalPages = computed(() => Math.ceil(totalRecords.value / pageSize.value) || 1);
     const pagedData = computed(() => {
       const start = (currentPage.value - 1) * pageSize.value;
       const end = start + pageSize.value;
@@ -348,7 +348,6 @@ export default {
       clearAllFilters,
       hasActiveFilters,
       underlineStyle
-      
     };
   }
 };
@@ -432,7 +431,7 @@ export default {
 }
 
 /* custom cell classes */
-.cell-name { color: #111827; font-weight: 600; }
+.cell-name { color: #111827; }
 .cell-date { color: #0f9d58; }
 
 /* action button */
