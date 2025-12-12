@@ -171,7 +171,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
-import { getSurgicalPlanByIpdId } from '@/apis/SurgicalPlan';
+import { getSurgicalPlanByIpdId, createSurgicalPlan, updateSurgicalPlan } from '@/apis/SurgicalPlan';
 
 const props = defineProps({
   dialog: Boolean,
@@ -196,6 +196,9 @@ const postopComplication = ref('');
 // Add dynamic lists for results and patient complaints
 const resultsList = ref([{ name: '' }]);
 const patientComplaintsList = ref([{ name: '' }]);
+
+// Track if surgical plan already exists
+const surgicalPlanExists = ref(false);
 
 // Load data from local storage or fetch from backend when component is mounted
 onMounted(() => {
@@ -233,16 +236,19 @@ const loadSurgicalPlanData = async () => {
         postopComplication.value = data.postoperativeCourse || '';
         resultsList.value = data.results && Array.isArray(data.results) && data.results.length > 0 ? data.results.map(name => ({ name })) : [{ name: '' }];
         patientComplaintsList.value = data.patientComplaints && Array.isArray(data.patientComplaints) && data.patientComplaints.length > 0 ? data.patientComplaints.map(name => ({ name })) : [{ name: '' }];
+        surgicalPlanExists.value = true;
       }
     } catch (error) {
       // If not found or other error, keep the fields empty (default)
       console.log('No surgical plan found for this IPD record, starting with empty form');
       // Reset to empty state
       resetFields();
+      surgicalPlanExists.value = false;
     }
   } else {
     // No IPD record ID, reset to empty state
     resetFields();
+    surgicalPlanExists.value = false;
   }
 };
 
@@ -271,10 +277,10 @@ const handleClose = () => {
   emit('close-dialog');
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   // No local storage save needed
   
-  emit('plan-saved', {
+  const planData = {
     ipdRecordId: props.ipdRecordId,
     surgeryPerformed: surgeryPerformed.value,
     instrumentsUsed: instrumentsUsed.value,
@@ -283,13 +289,29 @@ const handleSubmit = () => {
     findings: findings.value,
     specificFinding: specificFinding.value,
     intraoperativeIssue: intraoperativeIssue.value,
-    postopCare: postopCare.value,
-    postopComplication: postopComplication.value,
+    postoperativeCare: postopCare.value,
+    postoperativeCourse: postopComplication.value,
     results: resultsList.value.filter(i => i.name && i.name.trim()).map(i => i.name),
     patientComplaints: patientComplaintsList.value.filter(i => i.name && i.name.trim()).map(i => i.name),
-  });
-  resetFields();
-  emit('close-dialog');
+  };
+  
+  try {
+    if (surgicalPlanExists.value) {
+      // Update existing surgical plan
+      await updateSurgicalPlan(props.ipdRecordId, planData);
+    } else {
+      // Create new surgical plan
+      await createSurgicalPlan(planData);
+      surgicalPlanExists.value = true;
+    }
+    
+    emit('plan-saved', planData);
+    resetFields();
+    emit('close-dialog');
+  } catch (error) {
+    console.error('Error saving surgical plan:', error);
+    // Handle error appropriately
+  }
 };
 
 // --- Dynamic row logic for results and patient complaints ---

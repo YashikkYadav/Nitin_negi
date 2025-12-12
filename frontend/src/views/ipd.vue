@@ -8,12 +8,13 @@
         <v-btn class="saaro-btn" @click="showAddDialog = true">Add Record</v-btn>
       </v-col>
     </v-row>
-    <v-dialog v-model="showAddDialog" max-width="400px">
+    <v-dialog v-model="showAddDialog" max-width="600px">
       <v-card>
         <v-card-title>Select Section</v-card-title>
         <v-card-actions>
           <v-btn color="primary" @click="openIPD">IPD Section</v-btn>
           <v-btn color="secondary" @click="openProcedure">Procedure Section</v-btn>
+          <v-btn color="secondary" @click="openTentativeSurgery">Tentative Surgery</v-btn>
           <!-- <v-btn color="info" @click="openSurgicalPlan">Surgical Plan</v-btn> -->
         </v-card-actions>
       </v-card>
@@ -48,11 +49,13 @@
     />
     <ProcedureEntryForm v-if="showForm === 'procedure'" :dialog="true" @entry-saved="handleProcedureSaved" @close-dialog="closeForm" />
     <SurgicalPlanForm v-if="showForm === 'surgicalPlan'" :dialog="true" :ipdRecordId="selectedIpdRecordId" @plan-saved="handleSurgicalPlanSaved" @close-dialog="closeForm" />
-    <div v-if="!showForm">
+    <TentativeSurgeryEntryForm v-if="showForm === 'tentativeSurgery'" :dialog="true" :isEditModel="isEditModel" :entry="editEntry" @entry-saved="handleTentativeSurgerySaved" @close-dialog="closeForm" />
+    <div v-if="!showForm && !showTentativeSurgeryList">
       <IPDDataList :ipdData="ipdData" @edit-entry="handleEditEntry" />
       <!-- Removed old Procedure Records heading -->
       <ProcedureDataList :procedureData="procedureData" @mark-stent-removed="handleMarkStentRemoved" />
     </div>
+    <TentativeSurgeryDataList  @edit-entry="handleEditTentativeSurgery" />
   </v-container>
 </template>
 
@@ -62,6 +65,8 @@ import IPDDataList from '@/components/IPDDataList.vue';
 import ProcedureEntryForm from '@/components/ProcedureEntryForm.vue';
 import ProcedureDataList from '@/components/ProcedureDataList.vue';
 import SurgicalPlanForm from '@/components/SurgicalPlanForm.vue';
+import TentativeSurgeryEntryForm from '@/components/TentativeSurgeryEntryForm.vue'; // Added import
+import TentativeSurgeryDataList from '@/components/TentativeSurgeryDataList.vue'; // Added import
 import { ref, onMounted } from 'vue';
 import { getAllIPD, createIPD, updateIPD } from '@/apis/IPD';
 import { getAllProcedures, createProcedure, markStentRemoved, updateProcedure } from '@/apis/Procedure';
@@ -70,12 +75,21 @@ import { useUiStore } from '@/store/UiStore'; // <-- import UiStore
 
 export default {
   name: 'IPD',
-  components: { IPDEntryForm, IPDDataList, ProcedureEntryForm, ProcedureDataList, SurgicalPlanForm },
+  components: { 
+    IPDEntryForm, 
+    IPDDataList, 
+    ProcedureEntryForm, 
+    ProcedureDataList, 
+    SurgicalPlanForm,
+    TentativeSurgeryEntryForm, // Added component
+    TentativeSurgeryDataList // Added component
+  },
   setup() {
     const ipdData = ref([]);
     const procedureData = ref([]);
     const showForm = ref(null);
     const showAddDialog = ref(false);
+    const showTentativeSurgeryList = ref(false); // Added for showing tentative surgery list
     const editEntry = ref(null);
     const isEditModel = ref(false);
     const selectedIpdRecordId = ref(null);
@@ -113,6 +127,31 @@ export default {
       showForm.value = null;
       editEntry.value = null;
       isEditModel.value = false;
+    };
+    
+    // Added function for handling tentative surgery saves
+    const handleTentativeSurgerySaved = async (entry) => {
+      try {
+        // Close the form
+        showForm.value = null;
+        editEntry.value = null;
+        isEditModel.value = false;
+        
+        // Show success notification
+        uiStore.openNotificationMessage('Tentative surgery saved successfully!', '', 'success');
+        
+        // Refresh the tentative surgery list if it's visible
+        if (showTentativeSurgeryList.value) {
+          // Emit an event to refresh the list
+          window.dispatchEvent(new CustomEvent('tentative-surgery-updated'));
+        }
+      } catch (err) {
+        uiStore.openNotificationMessage(
+          err?.response?.data?.error || err.message || 'Failed to save tentative surgery',
+          '',
+          'error'
+        );
+      }
     };
 
     const fetchProcedureData = async () => {
@@ -175,10 +214,27 @@ export default {
       selectedIpdRecordId.value = ipdRecordId;
       showForm.value = 'surgicalPlan';
     };
+    
+    // Added function for opening tentative surgery form
+    const openTentativeSurgery = () => {
+      showAddDialog.value = false;
+      showTentativeSurgeryList.value = false; // Hide list when opening form
+      showForm.value = 'tentativeSurgery';
+      editEntry.value = null;
+      isEditModel.value = false;
+    };
+    
+    // Added function for showing tentative surgery list
+    const showTentativeSurgeryListFn = () => {
+      showAddDialog.value = false;
+      showForm.value = null; // Hide form when showing list
+      showTentativeSurgeryList.value = true;
+    };
+    
     const handleSurgicalPlanSaved = async (plan) => {
       try {
-        // Save the surgical plan to the backend
-        await createSurgicalPlan(plan);
+        // The surgical plan is now handled in the SurgicalPlanForm component itself
+        // We just need to close the form and show a success message
         uiStore.openNotificationMessage('Surgical plan saved successfully!', '', 'success');
         showForm.value = null;
       } catch (err) {
@@ -192,6 +248,7 @@ export default {
     };
     const closeForm = () => {
       showForm.value = null;
+      showTentativeSurgeryList.value = false; // Added
       editEntry.value = null;
       isEditModel.value = false;
     };
@@ -199,6 +256,13 @@ export default {
       editEntry.value = entry;
       isEditModel.value = true;
       showForm.value = 'ipd';
+    };
+    
+    // Added function for editing tentative surgery
+    const handleEditTentativeSurgery = (entry) => {
+      editEntry.value = entry;
+      isEditModel.value = true;
+      showForm.value = 'tentativeSurgery';
     };
     const handleMarkStentRemoved = async (item) => {
       try {
@@ -258,7 +322,11 @@ Thank you for choosing our healthcare services.`;
       fetchProcedureData();
     });
     return {
-      ipdData, procedureData, showForm, showAddDialog, handleEntrySaved, handleProcedureSaved, handleSurgicalPlanSaved, openIPD, openProcedure, openSurgicalPlan, closeForm, handleMarkStentRemoved,
+      ipdData, procedureData, showForm, showAddDialog, showTentativeSurgeryList, // Added showTentativeSurgeryList
+      handleEntrySaved, handleProcedureSaved, handleSurgicalPlanSaved,
+      openIPD, openProcedure, openSurgicalPlan, openTentativeSurgery, // Added openTentativeSurgery
+      showTentativeSurgeryListFn, handleEditTentativeSurgery, // Added new functions
+      closeForm, handleMarkStentRemoved,
       editEntry, isEditModel, handleEditEntry, selectedIpdRecordId,
       // WhatsApp message variables and functions
       showWhatsAppDialog, patientPhoneNumber, patientName, whatsappPhoneNumber, procedureDetails, sendWhatsAppMessage

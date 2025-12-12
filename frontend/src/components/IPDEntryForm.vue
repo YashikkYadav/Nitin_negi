@@ -154,6 +154,17 @@
             </v-col>
 
             <v-col cols="6">
+              <v-text-field
+                v-model="referredBy"
+                label="Referred By"
+                dense
+                variant="outlined"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="6">
               <v-textarea
                 v-model="notes"
                 label="Notes"
@@ -228,6 +239,7 @@ export default {
     const diagnosis = ref('');
     const surgeon = ref('Dr. Nitin Negi');
     const wardRoomNo = ref('');
+    const referredBy = ref('');
     const notes = ref('');
     const stentRemoved = ref(false);
 
@@ -281,6 +293,34 @@ export default {
       fetchPatientsTimeout = setTimeout(fetchPatients, 300);
     });
 
+    // Watch for changes in the entry prop to pre-fill the form when editing
+    watch(() => props.entry, (newEntry) => {
+      if (newEntry && props.isEditModel) {
+        // Pre-fill the form with existing data
+        dateOfAdmission.value = newEntry.dateOfAdmission ? new Date(newEntry.dateOfAdmission).toISOString().split('T')[0] : '';
+        category.value = newEntry.category || '';
+        operativeStatus.value = newEntry.operativeStatus || false;
+        paymentMethod.value = newEntry.paymentMethod || '';
+        paymentAmount.value = newEntry.paymentAmount || '';
+        donationAmount.value = newEntry.donationAmount || '';
+        diagnosis.value = newEntry.diagnosis || '';
+        surgeon.value = newEntry.surgeon || 'Dr. Nitin Negi';
+        wardRoomNo.value = newEntry.wardRoomNo || '';
+        referredBy.value = newEntry.referredBy || '';
+        notes.value = newEntry.notes || '';
+        stentRemoved.value = newEntry.stentRemoved || false;
+        
+        // Set patient information if available
+        if (newEntry.patientId) {
+          selectedPatient.value = {
+            title: `${newEntry.patientId.fullName} (${newEntry.patientId.phoneNumber || ''})`,
+            value: newEntry.patientId
+          };
+          phoneNumber.value = newEntry.patientId.phoneNumber || '';
+        }
+      }
+    }, { immediate: true });
+
     onBeforeUnmount(() => clearTimeout(fetchPatientsTimeout));
 
     /* ON PATIENT SELECTED */
@@ -316,6 +356,7 @@ export default {
         diagnosis: diagnosis.value,
         surgeon: surgeon.value,
         wardRoomNo: wardRoomNo.value,
+        referredBy: referredBy.value,
         notes: notes.value,
         stentRemoved: stentRemoved.value,
       });
@@ -336,6 +377,7 @@ export default {
       donationAmount.value = '';
       diagnosis.value = '';
       wardRoomNo.value = '';
+      referredBy.value = '';
       notes.value = '';
       stentRemoved.value = false;
     };
@@ -358,7 +400,7 @@ export default {
       /* fields */
       selectedPatient, patients, phoneNumber, dateOfAdmission, category,
       operativeStatus, paymentMethod, paymentAmount, donationAmount, diagnosis,
-      surgeon, wardRoomNo, notes, stentRemoved,
+      surgeon, wardRoomNo, referredBy, notes, stentRemoved,
 
       /* form */
       form, formValid, rules,
