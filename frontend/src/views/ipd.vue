@@ -67,12 +67,12 @@ import ProcedureDataList from '@/components/ProcedureDataList.vue';
 import SurgicalPlanForm from '@/components/SurgicalPlanForm.vue';
 import TentativeSurgeryEntryForm from '@/components/TentativeSurgeryEntryForm.vue'; // Added import
 import TentativeSurgeryDataList from '@/components/TentativeSurgeryDataList.vue'; // Added import
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { getAllIPD, createIPD, updateIPD } from '@/apis/IPD';
 import { getAllProcedures, createProcedure, markStentRemoved, updateProcedure } from '@/apis/Procedure';
+import { getAllTentativeSurgeries } from '@/apis/TentativeSurgery'; // Added import
 import { createSurgicalPlan } from '@/apis/SurgicalPlan';
 import { useUiStore } from '@/store/UiStore'; // <-- import UiStore
-
 export default {
   name: 'IPD',
   components: { 
@@ -106,6 +106,16 @@ export default {
       // console.log('Fetched IPD Data:', ipdData.value);
     };
 
+    const fetchTentativeSurgeryData = async () => {
+      try {
+        const res = await getAllTentativeSurgeries();
+        // We don't need to store this data locally since the TentativeSurgeryDataList handles its own data
+        // But we can log it for debugging purposes
+        console.log('Fetched tentative surgeries:', res.data || res || []);
+      } catch (error) {
+        console.error('Error fetching tentative surgeries:', error);
+      }
+    };
     const handleEntrySaved = async (entry) => {
       try {
         if (isEditModel.value && editEntry.value && editEntry.value._id) {
@@ -140,11 +150,17 @@ export default {
         // Show success notification
         uiStore.openNotificationMessage('Tentative surgery saved successfully!', '', 'success');
         
+        // Always refresh the IPD data to show any related changes
+        await fetchIPDData();
+        
         // Refresh the tentative surgery list if it's visible
         if (showTentativeSurgeryList.value) {
           // Emit an event to refresh the list
           window.dispatchEvent(new CustomEvent('tentative-surgery-updated'));
         }
+        
+        // Also dispatch a general patient update event that other components might listen to
+        window.dispatchEvent(new CustomEvent('patient-updated'));
       } catch (err) {
         uiStore.openNotificationMessage(
           err?.response?.data?.error || err.message || 'Failed to save tentative surgery',
@@ -153,7 +169,6 @@ export default {
         );
       }
     };
-
     const fetchProcedureData = async () => {
       procedureData.value = await getAllProcedures();
     };
@@ -253,6 +268,7 @@ export default {
       isEditModel.value = false;
     };
     const handleEditEntry = (entry) => {
+      console.log('Editing entry:', entry);
       editEntry.value = entry;
       isEditModel.value = true;
       showForm.value = 'ipd';
@@ -317,13 +333,30 @@ Thank you for choosing our healthcare services.`;
       showWhatsAppDialog.value = false;
     };
     
+    // Event handlers for real-time updates
+    const handleTentativeSurgeryUpdated = () => {
+      // The TentativeSurgeryDataList component handles its own data fetching
+      // This event listener ensures the component knows to refresh its data
+      // We also refresh the IPD data in case there are related changes
+      fetchIPDData();
+    };
+    
     onMounted(() => {
       fetchIPDData();
       fetchProcedureData();
+      // Set up event listeners for real-time updates
+      window.addEventListener('tentative-surgery-updated', handleTentativeSurgeryUpdated);
     });
+    
+    onBeforeUnmount(() => {
+      // Clean up event listeners
+      window.removeEventListener('tentative-surgery-updated', handleTentativeSurgeryUpdated);
+    });
+    
     return {
       ipdData, procedureData, showForm, showAddDialog, showTentativeSurgeryList, // Added showTentativeSurgeryList
       handleEntrySaved, handleProcedureSaved, handleSurgicalPlanSaved,
+      handleTentativeSurgerySaved, // Added function for handling tentative surgery saves
       openIPD, openProcedure, openSurgicalPlan, openTentativeSurgery, // Added openTentativeSurgery
       showTentativeSurgeryListFn, handleEditTentativeSurgery, // Added new functions
       closeForm, handleMarkStentRemoved,
