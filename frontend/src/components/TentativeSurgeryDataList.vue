@@ -116,7 +116,7 @@
           </v-chip>
         </template>
 
-        <template v-slot:[`item.actions`]="{ item }">
+        <template v-slot:[`item.actions`]="{ item }" v-if="showActions">
           <div class="flex gap-2">
             <v-btn icon @click="$emit('edit-entry', item)" class="action-btn-mobile">
               <v-icon>mdi-pencil</v-icon>
@@ -134,8 +134,14 @@ import { getAllTentativeSurgeries } from '@/apis/TentativeSurgery';
 
 export default {
   name: 'TentativeSurgeryDataList',
+  props: {
+    showActions: {
+      type: Boolean,
+      default: true
+    }
+  },
   emits: ['edit-entry'],
-  setup() {
+  setup(props) {
     const statusOptions = [
       { title: 'All', value: 'all' },
       { title: 'Pending', value: 'pending' },
@@ -153,14 +159,22 @@ export default {
     const pageSize = ref(10);
     const pageSizeOptions = [10, 25, 50, 100];
 
-    const headers = [
-      { key: 'patientName', title: 'Patient Name' },
-      { key: 'phoneNumber', title: 'Phone Number' },
-      { key: 'gender', title: 'Gender' },
-      { key: 'dateOfSurgery', title: 'Date of Surgery' },
-      { key: 'status', title: 'Status' },
-      { key: 'actions', title: 'Actions', sortable: false },
-    ];
+    const headers = computed(() => {
+      const baseHeaders = [
+        { key: 'patientName', title: 'Patient Name' },
+        { key: 'phoneNumber', title: 'Phone Number' },
+        { key: 'gender', title: 'Gender' },
+        { key: 'dateOfSurgery', title: 'Date of Surgery' },
+        { key: 'status', title: 'Status' }
+      ];
+      
+      // Only add actions column if showActions is true
+      if (props.showActions) {
+        baseHeaders.push({ key: 'actions', title: 'Actions', sortable: false });
+      }
+      
+      return baseHeaders;
+    });
 
     const fetchTentativeSurgeries = async () => {
       loading.value = true;

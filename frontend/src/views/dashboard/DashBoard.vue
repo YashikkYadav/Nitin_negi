@@ -49,6 +49,13 @@
       </v-col>
     </v-row>
       <surgery-tables />
+      
+      <!-- Tentative Surgery Records -->
+      <v-row class="mt-8">
+        <v-col cols="12">
+          <tentative-surgery-data-list :show-actions="false" @edit-entry="handleEditTentativeSurgery" />
+        </v-col>
+      </v-row>
 
     <!-- AI Chat Modal -->
     <AIChatModal 
@@ -62,12 +69,14 @@ import IPDBarGraphs from '@/components/IPDBarGraphs.vue';
 import ProcedureMetrics from '@/components/ProcedureMetrics.vue';
 import { getIPDDashboard } from '@/apis/IPD';
 import { getProcedureDashboard } from '@/apis/Procedure';
+import { useUiStore } from '@/store/UiStore'; // <-- import UiStore
 import Last24HoursPatient from './components/Last24HoursPatient.vue'
 import Last30DaysPatient from './components/Last30DaysPatient.vue'
 import Last30DaysInvoice from './components/Last30DaysInvoice.vue';
 import Last30DaysPayment from './components/Last30DaysPayment.vue';
 import ComparisionData from './components/ComparisionData.vue';
 import SurgeryTables from './components/SurgeryTables.vue';
+import TentativeSurgeryDataList from '@/components/TentativeSurgeryDataList.vue'; // Added import
 import AIChatModal from '@/components/AIChatModal.vue';
 
 export default {
@@ -81,13 +90,15 @@ export default {
     Last30DaysPayment,
     ComparisionData,
     SurgeryTables,
+    TentativeSurgeryDataList, // Added component
     AIChatModal
   },
   data() {
     return {
       ipdMetrics: {},
       procedureMetrics: {},
-      showAIChat: false
+      showAIChat: false,
+      uiStore: useUiStore() // <-- use UiStore
     };
   },
   async mounted() {
@@ -141,6 +152,16 @@ export default {
     openAIChat() {
       console.log("Ask AI button clicked - opening chat modal");
       this.showAIChat = true;
+    },
+    handleEditTentativeSurgery(entry) {
+      console.log('Edit tentative surgery entry:', entry);
+      // Since we're hiding action buttons, this function shouldn't be called
+      // But keeping it for consistency
+      this.uiStore.openNotificationMessage(
+        'Action buttons are hidden on dashboard. Please go to IPD section to edit tentative surgeries.',
+        '',
+        'info'
+      );
     }
   },
 };
