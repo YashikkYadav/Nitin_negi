@@ -49,24 +49,25 @@
                     </v-row>
                     <v-row>
                         <v-col cols="6">
-                            <!-- Date of Birth Picker -->
+                            <!-- Age Field (Manual Entry) -->
+                            <v-text-field v-model.number="form.age" label="Age" placeholder="e.g. 35"
+                                :rules="[rules.required]" variant="outlined" type="number" dense>
+                            </v-text-field>
+                        </v-col>
+                        <v-col cols="6">
+                            <!-- Date of Birth Picker (Optional) -->
                             <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition"
                                 offset-y min-width="auto">
                                 <template v-slot:activator="{ props }">
-                                    <v-text-field v-model="form.dateOfBirth" label="Date of Birth"
+                                    <v-text-field v-model="form.dateOfBirth" label="Date of Birth (Optional)"
                                         prepend-icon="mdi-calendar" readonly v-bind="props" variant="outlined"
-                                        :rules="[rules.required]" dense>
+                                        dense>
                                     </v-text-field>
                                 </template>
                                 <v-date-picker v-model="form.dateOfBirth" @update:model-value="menu = false"
                                     :max="new Date().toISOString().substr(0, 10)">
                                 </v-date-picker>
                             </v-menu>
-                        </v-col>
-                        <v-col cols="6">
-                            <v-text-field v-model.number="form.age" label="Age" placeholder="e.g. 35"
-                                :rules="[rules.required]" variant="outlined" @input="updateAge" type="number" dense>
-                            </v-text-field>
                         </v-col>
                     </v-row>
                     <v-row>

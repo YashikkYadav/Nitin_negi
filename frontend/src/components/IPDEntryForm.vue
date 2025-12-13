@@ -411,6 +411,9 @@ export default {
       /* snackbar */
       snackbar, snackbarMessage,
 
+      /* register dialog */
+      registerDialog,
+
       /* functions */
       onPatientSelected,
       handleSubmit,
