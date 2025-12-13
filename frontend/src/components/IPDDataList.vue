@@ -115,6 +115,11 @@
         <template v-slot:[`item.dateOfAdmission`]="{ item }">
           <span>{{ new Date(item.dateOfAdmission).toLocaleDateString('en-GB') }}</span>
         </template>
+        
+        <template v-slot:[`item.referredBy`]="{ item }">
+          <span>{{ item.referredBy }}</span>
+        </template>
+        
         <template v-slot:[`item.procedureName`]="{ item }">
           <v-chip v-if="highlightedProcedures.includes(item.procedureName)" color="primary" dark>
             {{ item.procedureName }}
@@ -153,6 +158,7 @@ import { useUiStore } from '@/store/UiStore'; // <-- import UiStore
 export default {
   name: 'IPDDataList',
   components: { SurgicalPlanForm },
+  emits: ['edit-entry'],
   setup() {
     const highlightedProcedures = ['DJ Stent Removal', 'Dressing Removal', 'Sutures Removal'];
     const procedureFilter = ref('');
@@ -178,6 +184,7 @@ export default {
       { key: 'diagnosis', title: 'Diagnosis' },
       { key: 'surgeon', title: 'Surgeon' },
       { key: 'wardRoomNo', title: 'Ward/Room No.' },
+      { key: 'referredBy', title: 'Referred By' },
       { key: 'notes', title: 'Notes' },
       { key: 'procedureName', title: 'Procedure' },
       { key: 'actions', title: 'Actions', sortable: false },

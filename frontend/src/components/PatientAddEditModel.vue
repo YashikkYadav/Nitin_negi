@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="isDialogOpen" max-width="800px">
+    <v-dialog :model-value="isDialogOpen" max-width="800px" @update:model-value="handleDialogUpdate">
         <v-card class="add-patient-popup popup-card">
             <!-- Header -->
             <v-card-title class="d-flex justify-space-between align-center popup-title">
@@ -27,49 +27,45 @@
                         </v-col>
                     </v-row>
                     <v-row>
-                        <v-col class="v-col-12">
+                        <v-col cols="12">
                             <v-text-field v-model="form.alternateNumber" label="Alternate Phone Number (Optional)"
-                                placeholder="e.g. 9988776655" variant="outlined" outlined dense>
-                            </v-text-field>
-                        </v-col>
-                    </v-row>
-                    <!-- Name Section -->
-                    <v-row>
-                        <v-col cols="2">
-                            <v-select v-model="form.title" label="Title" :items="['Mr.', 'Mrs.', 'Dr.']"
-                                variant="outlined" placeholder="Title" dense>
-                            </v-select>
-                        </v-col>
-                        <v-col cols="5">
-                            <v-text-field v-model="form.name" label="Full Name" placeholder="Full Name"
-                                variant="outlined" :rules="[rules.required]" dense>
-                            </v-text-field>
-                        </v-col>
-                        <v-col cols="5">
-                            <v-text-field v-model="form.spouseName" label="Father/Spouse Name" placeholder="Father/Spouse Name"
-                                variant="outlined" dense>
+                                placeholder="e.g. 7740997399" variant="outlined" dense>
                             </v-text-field>
                         </v-col>
                     </v-row>
 
-                    <!-- Date of Birth and Age -->
+                    <!-- Personal Details Section -->
+                    <v-row>
+                        <v-col cols="12" sm="6">
+                            <v-text-field v-model="form.name" label="Full Name" placeholder="e.g. Rajesh Kumar"
+                                :rules="[rules.required]" variant="outlined" dense>
+                            </v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                            <v-text-field v-model="form.spouseName" label="Spouse Name (Optional)"
+                                placeholder="e.g. Sunita Devi" variant="outlined" dense>
+                            </v-text-field>
+                        </v-col>
+                    </v-row>
                     <v-row>
                         <v-col cols="6">
+                            <!-- Date of Birth Picker -->
                             <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition"
-                                offset-y>
-                                <template #activator="{ on, attrs }">
-                                    <v-text-field v-model="form.dateOfBirth" label="Date of Birth" :readonly="false"
-                                        variant="outlined" type="date" dense v-bind="attrs" v-on="on"
-                                        @update:modelValue="updateAge">
-                                        <!-- <template #prepend>
-                          <v-icon>mdi-calendar</v-icon>
-                        </template> -->
+                                offset-y min-width="auto">
+                                <template v-slot:activator="{ props }">
+                                    <v-text-field v-model="form.dateOfBirth" label="Date of Birth"
+                                        prepend-icon="mdi-calendar" readonly v-bind="props" variant="outlined"
+                                        :rules="[rules.required]" dense>
                                     </v-text-field>
                                 </template>
+                                <v-date-picker v-model="form.dateOfBirth" @update:model-value="menu = false"
+                                    :max="new Date().toISOString().substr(0, 10)">
+                                </v-date-picker>
                             </v-menu>
                         </v-col>
                         <v-col cols="6">
-                            <v-text-field v-model.number="form.age" label="Age" variant="outlined" dense type="number">
+                            <v-text-field v-model.number="form.age" label="Age" placeholder="e.g. 35"
+                                :rules="[rules.required]" variant="outlined" @input="updateAge" type="number" dense>
                             </v-text-field>
                         </v-col>
                     </v-row>
@@ -222,6 +218,11 @@ export default {
         },
     },
     methods: {
+        handleDialogUpdate(value) {
+            if (!value) {
+                this.$emit('close-dialog');
+            }
+        },
         async fetchPatientDetails() {
             const res = await usePatientStore().getPatientDetailsApiCall(this.patientId)
 

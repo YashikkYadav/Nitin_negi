@@ -1,13 +1,13 @@
-const path = require('path');
-const fs = require('fs');
-const PDFDocument = require('pdfkit');
+const path = require("path");
+const fs = require("fs");
+const PDFDocument = require("pdfkit");
 
 const generatePrescriptionPDF = async (prescription, patientData) => {
   return new Promise((resolve, reject) => {
     const pdfDoc = new PDFDocument({ margin: 30, marginBottom: 70 });
     pdfDoc.moveDown(10);
 
-    const publicFolder = path.join(__dirname, '../public', 'prescriptions');
+    const publicFolder = path.join(__dirname, "../public", "prescriptions");
     const fileName = `prescription_${prescription._id}.pdf`;
     const filePath = path.join(publicFolder, fileName);
 
@@ -18,7 +18,7 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     const writeStream = fs.createWriteStream(filePath);
     pdfDoc.pipe(writeStream);
 
-    pdfDoc.on('pageAdded', () => {
+    pdfDoc.on("pageAdded", () => {
       pdfDoc.moveDown(10);
     });
 
@@ -26,7 +26,7 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     const leftMargin = pdfDoc.page.margins.left;
     const rightMargin = pdfDoc.page.margins.right;
 
-    let leftText = '';
+    let leftText = "";
     if (patientData?.age) {
       leftText = `${patientData?.uid}: ${patientData?.fullName} (${patientData?.age}y, ${patientData?.gender}) - ${patientData?.phoneNumber}`;
     } else {
@@ -36,14 +36,17 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     createdAtDate.setHours(createdAtDate.getHours());
     createdAtDate.setMinutes(createdAtDate.getMinutes());
 
-    const imagePath = path.join(__dirname, '../public/images/prescription-logo.png');
+    const imagePath = path.join(
+      __dirname,
+      "../headerimage/prescription-logo.png"
+    );
 
-    const rightText = `Date & Time: ${new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const rightText = `Date & Time: ${new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: true,
     }).format(createdAtDate)}`;
     const rightTextWidth = pdfDoc.widthOfString(rightText);
@@ -57,45 +60,48 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(leftText, leftMargin, currentY, { continued: true })
-        .text(rightText, pageWidth - rightMargin - rightTextWidth - 370, currentY, { align: 'right' });
+        .text(
+          rightText,
+          pageWidth - rightMargin - rightTextWidth - 370,
+          currentY,
+          { align: "right" }
+        );
 
       const startX = pdfDoc.page.margins.left;
       const endX = pdfDoc.page.width - pdfDoc.page.margins.right;
 
       pdfDoc
-        .moveTo(startX-10, currentY+10)
-        .lineTo(endX+10, currentY+10)
+        .moveTo(startX - 10, currentY + 10)
+        .lineTo(endX + 10, currentY + 10)
         .stroke()
         .moveDown();
     };
 
     addHeaderImage(pdfDoc);
-    pdfDoc.on('pageAdded', () => {
+    pdfDoc.on("pageAdded", () => {
       addHeaderImage(pdfDoc);
     });
 
-    const boldFont = 'Helvetica-Bold';
-    const normalFont = 'Helvetica';
+    const boldFont = "Helvetica-Bold";
+    const normalFont = "Helvetica";
 
     let vitals = [
-      { label: 'BP', value: prescription?.bloodPressure, unit: 'mm/Hg' },
-      { label: 'Pulse', value: prescription?.pulse, unit: 'bpm' },
-      { label: 'Weight', value: prescription?.weight, unit: 'kg' },
-      { label: 'Height', value: prescription?.height, unit: 'cm' },
-      { label: 'Temperature', value: prescription?.temperature, unit: '°F' },
-      { label: 'Pain Score', value: prescription?.painScore, unit: '' },
+      { label: "BP", value: prescription?.bloodPressure, unit: "mm/Hg" },
+      { label: "Pulse", value: prescription?.pulse, unit: "bpm" },
+      { label: "Weight", value: prescription?.weight, unit: "kg" },
+      { label: "Height", value: prescription?.height, unit: "cm" },
+      { label: "Temperature", value: prescription?.temperature, unit: "°F" },
+      { label: "Pain Score", value: prescription?.painScore, unit: "" },
     ];
 
     let first = true;
 
-    vitals.forEach(vital => {
-      if (vital.value !== '' && vital.value !== null) {
+    vitals.forEach((vital) => {
+      if (vital.value !== "" && vital.value !== null) {
         if (!first) {
-          pdfDoc
-            .font(normalFont)
-            .text('| ', { continued: true });
+          pdfDoc.font(normalFont).text("| ", { continued: true });
         }
         pdfDoc
           .font(boldFont)
@@ -106,21 +112,19 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
       }
     });
 
-    pdfDoc
-      .text('')
-      .moveDown();
+    pdfDoc.text("").moveDown();
 
     if (
-      prescription?.complaints
-      && prescription?.complaints.length !== 0
-      && prescription?.complaints[0]
-      && prescription?.complaints[0].length !== 0
+      prescription?.complaints &&
+      prescription?.complaints.length !== 0 &&
+      prescription?.complaints[0] &&
+      prescription?.complaints[0].length !== 0
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .moveDown(0.5)
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Complaints: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -132,10 +136,10 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text('• ', bulletX, textY, { continued: true });
+            .font("Helvetica")
+            .text("• ", bulletX, textY, { continued: true });
 
-          pdfDoc.text(sentence.trim(), textX, textY, { align: 'left' });
+          pdfDoc.text(sentence.trim(), textX, textY, { align: "left" });
           pdfDoc.moveDown(0.2);
         }
       });
@@ -144,7 +148,7 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     const addFieldStylish = (label, value) => {
-      if (value && value !== 'null ()' && value !== '()' && value !== ' ()') {
+      if (value && value !== "null ()" && value !== "()" && value !== " ()") {
         const leftMargin = pdfDoc.page.margins.left;
 
         if (pdfDoc.y + 15 > pdfDoc.page.height - pdfDoc.page.margins.bottom) {
@@ -153,9 +157,9 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
         pdfDoc
           .fontSize(10)
-          .font('Helvetica-Bold')
+          .font("Helvetica-Bold")
           .text(`${label}:`, leftMargin, pdfDoc.y, { continued: true })
-          .font('Helvetica')
+          .font("Helvetica")
           .text(` ${value}`)
           .moveDown(0.3);
       }
@@ -171,19 +175,31 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
       const printTableHeader = () => {
         pdfDoc
           .fontSize(10)
-          .font('Helvetica-Bold')
-          .text('Medicine', leftMargin, pdfDoc.y-8, { width: columnWidth, align: 'left' })
-          .text('Dosage', leftMargin + columnWidth, pdfDoc.y-12, { width: columnWidth, align: 'left' })
-          .text('Frequency', leftMargin + columnWidth * 2, pdfDoc.y-12, { width: columnWidth, align: 'left' })
-          .text('Duration', leftMargin + columnWidth * 3, pdfDoc.y-12, { width: columnWidth, align: 'left' });
+          .font("Helvetica-Bold")
+          .text("Medicine", leftMargin, pdfDoc.y - 8, {
+            width: columnWidth,
+            align: "left",
+          })
+          .text("Dosage", leftMargin + columnWidth, pdfDoc.y - 12, {
+            width: columnWidth,
+            align: "left",
+          })
+          .text("Frequency", leftMargin + columnWidth * 2, pdfDoc.y - 12, {
+            width: columnWidth,
+            align: "left",
+          })
+          .text("Duration", leftMargin + columnWidth * 3, pdfDoc.y - 12, {
+            width: columnWidth,
+            align: "left",
+          });
 
         pdfDoc.moveDown(1);
         pdfDoc
           .moveTo(leftMargin, pdfDoc.y)
           .lineTo(pageWidth - rightMargin, pdfDoc.y)
-          .strokeColor('#AAAAAA')
+          .strokeColor("#AAAAAA")
           .stroke();
-    
+
         pdfDoc.moveDown(0.5);
       };
 
@@ -199,11 +215,29 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
       pdfDoc
         .moveDown(0.5)
         .fontSize(10)
-        .font('Helvetica')
-        .text(`${index}) ${medicine?.name || '-'}`, leftMargin, pdfDoc.y-8, { width: columnWidth, align: 'left' })
-        .text(medicine?.dosage || '-', leftMargin + columnWidth, pdfDoc.y - 12, { width: columnWidth, align: 'left' })
-        .text(medicine?.frequency || '-', leftMargin + columnWidth * 2, pdfDoc.y - 12, { width: columnWidth, align: 'left' })
-        .text(medicine?.duration || '-', leftMargin + columnWidth * 3, pdfDoc.y - 12, { width: columnWidth, align: 'left' });
+        .font("Helvetica")
+        .text(`${index}) ${medicine?.name || "-"}`, leftMargin, pdfDoc.y - 8, {
+          width: columnWidth,
+          align: "left",
+        })
+        .text(
+          medicine?.dosage || "-",
+          leftMargin + columnWidth,
+          pdfDoc.y - 12,
+          { width: columnWidth, align: "left" }
+        )
+        .text(
+          medicine?.frequency || "-",
+          leftMargin + columnWidth * 2,
+          pdfDoc.y - 12,
+          { width: columnWidth, align: "left" }
+        )
+        .text(
+          medicine?.duration || "-",
+          leftMargin + columnWidth * 3,
+          pdfDoc.y - 12,
+          { width: columnWidth, align: "left" }
+        );
 
       let lastY = pdfDoc.y;
 
@@ -217,8 +251,11 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         pdfDoc
           .moveDown(0.5)
           .fontSize(8)
-          .font('Helvetica-Oblique')
-          .text(`Composition: ${medicine?.composition}`, leftMargin, lastY, { width: pageWidth - leftMargin - rightMargin, align: 'left' });
+          .font("Helvetica-Oblique")
+          .text(`Composition: ${medicine?.composition}`, leftMargin, lastY, {
+            width: pageWidth - leftMargin - rightMargin,
+            align: "left",
+          });
 
         lastY = pdfDoc.y;
       }
@@ -232,8 +269,11 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         pdfDoc
           .moveDown(0.5)
           .fontSize(9)
-          .font('Helvetica-Oblique')
-          .text(`Notes: ${medicine?.notes}`, leftMargin, lastY, { width: pageWidth - leftMargin - rightMargin, align: 'left' });
+          .font("Helvetica-Oblique")
+          .text(`Notes: ${medicine?.notes}`, leftMargin, lastY, {
+            width: pageWidth - leftMargin - rightMargin,
+            align: "left",
+          });
 
         lastY = pdfDoc.y;
       }
@@ -241,22 +281,22 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
       pdfDoc
         .moveTo(leftMargin, pdfDoc.y)
         .lineTo(pageWidth - rightMargin, pdfDoc.y)
-        .strokeColor('#AAAAAA')
+        .strokeColor("#AAAAAA")
         .stroke();
 
       pdfDoc.moveDown(1);
     };
 
     if (
-      prescription?.history
-      && prescription?.history.length !== 0
-      && prescription?.history[0]
-      && prescription?.history[0].length !== 0
+      prescription?.history &&
+      prescription?.history.length !== 0 &&
+      prescription?.history[0] &&
+      prescription?.history[0].length !== 0
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`History: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -268,10 +308,10 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text('• ', bulletX, textY, { continued: true });
+            .font("Helvetica")
+            .text("• ", bulletX, textY, { continued: true });
 
-          pdfDoc.text(sentence.trim(), textX, textY, { align: 'left' });
+          pdfDoc.text(sentence.trim(), textX, textY, { align: "left" });
           pdfDoc.moveDown(0.2);
         }
       });
@@ -280,19 +320,22 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (prescription?.recentInvestigation) {
-      addFieldStylish('Recent Investigation', prescription?.recentInvestigation);
+      addFieldStylish(
+        "Recent Investigation",
+        prescription?.recentInvestigation
+      );
     }
 
     if (
-      prescription?.physicalExamination
-      && prescription?.physicalExamination.length !== 0
-      && prescription?.physicalExamination[0]
-      && prescription?.physicalExamination[0].length !== 0
+      prescription?.physicalExamination &&
+      prescription?.physicalExamination.length !== 0 &&
+      prescription?.physicalExamination[0] &&
+      prescription?.physicalExamination[0].length !== 0
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Physical Examination: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -304,10 +347,10 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text('• ', bulletX, textY, { continued: true });
+            .font("Helvetica")
+            .text("• ", bulletX, textY, { continued: true });
 
-          pdfDoc.text(sentence.trim(), textX, textY, { align: 'left' });
+          pdfDoc.text(sentence.trim(), textX, textY, { align: "left" });
           pdfDoc.moveDown(0.2);
         }
       });
@@ -315,14 +358,14 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (
-      prescription?.drugAllergy
-      && prescription?.drugAllergy.length !== 0
-      && prescription?.drugAllergy[0]
+      prescription?.drugAllergy &&
+      prescription?.drugAllergy.length !== 0 &&
+      prescription?.drugAllergy[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Drug Allergy: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -330,13 +373,13 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         if (drug.details) {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${drug?.name}:  ${drug?.details}`, { indent: 20 })
             .moveDown(0.2);
         } else {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${drug?.name}`, { indent: 20 })
             .moveDown(0.2);
         }
@@ -345,14 +388,14 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (
-      prescription?.drugHistory
-      && prescription?.drugHistory.length !== 0
-      && prescription?.drugHistory[0]
+      prescription?.drugHistory &&
+      prescription?.drugHistory.length !== 0 &&
+      prescription?.drugHistory[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Drug History`, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -360,13 +403,13 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         if (drug.details) {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${drug?.name}:  ${drug?.details}`, { indent: 20 })
             .moveDown(0.2);
         } else {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${drug?.name}`, { indent: 20 })
             .moveDown(0.2);
         }
@@ -375,22 +418,22 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (
-      prescription?.antiplatlet
-      && prescription?.antiplatlet.length !== 0
-      && prescription?.antiplatlet[0]
+      prescription?.antiplatlet &&
+      prescription?.antiplatlet.length !== 0 &&
+      prescription?.antiplatlet[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`ANTIPLATELET/ANTICOAGULANT: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
-    
+
       prescription.antiplatlet.forEach((anti) => {
         if (anti.details) {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica-Bold')
+            .font("Helvetica-Bold")
             .text(
               `• ${anti?.name?.toUpperCase()}: ${anti?.details?.toUpperCase()}`,
               { indent: 20 }
@@ -399,27 +442,27 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         } else {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica-Bold')
-            .text(
-              `• ${anti?.name?.toUpperCase()}`,
-              { indent: 20 }
-            )
+            .font("Helvetica-Bold")
+            .text(`• ${anti?.name?.toUpperCase()}`, { indent: 20 })
             .moveDown(0.2);
         }
       });
       pdfDoc.moveDown(0.3);
     }
 
-    addFieldStylish('Previous Surgery', `${prescription?.previousSurgery || ''}`);
+    addFieldStylish(
+      "Previous Surgery",
+      `${prescription?.previousSurgery || ""}`
+    );
     if (
-      prescription?.diagnosis
-      && prescription?.diagnosis.length !== 0
-      && prescription?.diagnosis[0]
+      prescription?.diagnosis &&
+      prescription?.diagnosis.length !== 0 &&
+      prescription?.diagnosis[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Diagnosis: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -427,13 +470,15 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         if (diagnosis.details) {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text(`• ${diagnosis?.type}:  ${diagnosis?.details}`, { indent: 20 })
+            .font("Helvetica")
+            .text(`• ${diagnosis?.type}:  ${diagnosis?.details}`, {
+              indent: 20,
+            })
             .moveDown(0.2);
         } else {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${diagnosis?.type}`, { indent: 20 })
             .moveDown(0.2);
         }
@@ -442,14 +487,14 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (
-      prescription?.implant
-      && prescription?.implant.length !== 0
-      && prescription?.implant[0]
+      prescription?.implant &&
+      prescription?.implant.length !== 0 &&
+      prescription?.implant[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Implants: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -457,13 +502,18 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
         if (implant.removalDate) {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text(`• ${implant?.name}, Removal Date:  ${formatDateToDDMMYYYY(implant?.removalDate)}`, { indent: 20 })
+            .font("Helvetica")
+            .text(
+              `• ${implant?.name}, Removal Date:  ${formatDateToDDMMYYYY(
+                implant?.removalDate
+              )}`,
+              { indent: 20 }
+            )
             .moveDown(0.2);
         } else {
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
+            .font("Helvetica")
             .text(`• ${implant?.name}`, { indent: 20 })
             .moveDown(0.2);
         }
@@ -472,40 +522,42 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (
-      prescription?.investigationsAdviced
-      && prescription?.investigationsAdviced.length !== 0
-      && prescription?.investigationsAdviced[0]
+      prescription?.investigationsAdviced &&
+      prescription?.investigationsAdviced.length !== 0 &&
+      prescription?.investigationsAdviced[0]
     ) {
       const leftMargin = pdfDoc.page.margins.left;
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Investigation Advice: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
-        prescription.investigationsAdviced.forEach((advice) => {
-          if (advice.details) {
-            pdfDoc
-              .fontSize(10)
-              .font('Helvetica')
-              .text(`• ${advice?.name}, Details: ${advice?.details}`, { indent: 20 })
-              .moveDown(0.2);
-            } else {
-              pdfDoc
-                .fontSize(10)
-                .font('Helvetica')
-                .text(`• ${advice?.name}`, { indent: 20 })
-                .moveDown(0.2);
-            }
+      prescription.investigationsAdviced.forEach((advice) => {
+        if (advice.details) {
+          pdfDoc
+            .fontSize(10)
+            .font("Helvetica")
+            .text(`• ${advice?.name}, Details: ${advice?.details}`, {
+              indent: 20,
+            })
+            .moveDown(0.2);
+        } else {
+          pdfDoc
+            .fontSize(10)
+            .font("Helvetica")
+            .text(`• ${advice?.name}`, { indent: 20 })
+            .moveDown(0.2);
+        }
       });
       pdfDoc.moveDown(0.3);
     }
 
     pdfDoc.moveDown();
     if (
-      prescription?.medications
-      && prescription?.medications.length > 0
-      && prescription?.medications[0]
+      prescription?.medications &&
+      prescription?.medications.length > 0 &&
+      prescription?.medications[0]
     ) {
       prescription.medications.forEach((medicine, index) => {
         addMedicineEntry(index + 1, medicine);
@@ -514,9 +566,15 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
     const today = new Date();
     const followUpDate = new Date(today || 0);
-    followUpDate.setDate(today.getDate() + parseInt(prescription?.followUp.days, 10));
+    followUpDate.setDate(
+      today.getDate() + parseInt(prescription?.followUp.days, 10)
+    );
 
-    if (prescription?.advice && prescription.advice.length > 0 && prescription.advice[0] !== '') {
+    if (
+      prescription?.advice &&
+      prescription.advice.length > 0 &&
+      prescription.advice[0] !== ""
+    ) {
       const leftMargin = pdfDoc.page.margins.left;
 
       if (pdfDoc.y + 20 > pdfDoc.page.height - pdfDoc.page.margins.bottom) {
@@ -525,7 +583,7 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
       pdfDoc
         .fontSize(10)
-        .font('Helvetica-Bold')
+        .font("Helvetica-Bold")
         .text(`Advice: `, leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
@@ -541,10 +599,10 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
 
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text('• ', bulletX, textY, { continued: true });
+            .font("Helvetica")
+            .text("• ", bulletX, textY, { continued: true });
 
-          pdfDoc.text(sentence.trim(), textX, textY, { align: 'left' });
+          pdfDoc.text(sentence.trim(), textX, textY, { align: "left" });
           pdfDoc.moveDown(0.2);
         }
       });
@@ -552,19 +610,32 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     }
 
     if (prescription?.surgeryAdvice?.date) {
-      addFieldStylish('Surgery Advice', `${prescription?.surgeryAdvice?.name}, Date: ${formatDateToDDMMYYYY(prescription?.surgeryAdvice?.date)}`);
+      addFieldStylish(
+        "Surgery Advice",
+        `${prescription?.surgeryAdvice?.name}, Date: ${formatDateToDDMMYYYY(
+          prescription?.surgeryAdvice?.date
+        )}`
+      );
     } else {
-      addFieldStylish('Surgery Advice', prescription?.surgeryAdvice?.name);
+      addFieldStylish("Surgery Advice", prescription?.surgeryAdvice?.name);
     }
 
     if (prescription?.followUp.days) {
-      addFieldStylish('Follow Up Days', `${prescription?.followUp.days}, Date: (${followUpDate.toDateString()})`);
+      addFieldStylish(
+        "Follow Up Days",
+        `${prescription?.followUp.days}, Date: (${followUpDate.toDateString()})`
+      );
     }
 
     if (prescription?.referredBy?.speciality) {
-      addFieldStylish('Referred By', `${prescription?.referredBy?.name} (${prescription?.referredBy?.speciality || ''})`);
+      addFieldStylish(
+        "Referred By",
+        `${prescription?.referredBy?.name} (${
+          prescription?.referredBy?.speciality || ""
+        })`
+      );
     } else if (prescription?.referredBy?.name) {
-      addFieldStylish('Referred By', `${prescription?.referredBy?.name}`);
+      addFieldStylish("Referred By", `${prescription?.referredBy?.name}`);
     }
 
     if (prescription?.referredTo && prescription?.referredTo.length > 0) {
@@ -573,8 +644,8 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
       pdfDoc
         .moveDown(0.5)
         .fontSize(10)
-        .font('Helvetica-Bold')
-        .text('Referred To:', leftMargin, pdfDoc.y)
+        .font("Helvetica-Bold")
+        .text("Referred To:", leftMargin, pdfDoc.y)
         .moveDown(0.3);
 
       const textX = pdfDoc.x + 20;
@@ -593,10 +664,10 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
           const textY = pdfDoc.y;
           pdfDoc
             .fontSize(10)
-            .font('Helvetica')
-            .text('• ', bulletX, textY, { continued: true });
+            .font("Helvetica")
+            .text("• ", bulletX, textY, { continued: true });
 
-          pdfDoc.text(referralText, textX, textY, { align: 'left' });
+          pdfDoc.text(referralText, textX, textY, { align: "left" });
           pdfDoc.moveDown(0.2);
         }
       });
@@ -613,7 +684,7 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     //   minute: '2-digit',
     //   hour12: true,
     // }).format(new Date())}`;
-    
+
     // pdfDoc
     //   .moveDown()
     //   .fontSize(8)
@@ -621,17 +692,17 @@ const generatePrescriptionPDF = async (prescription, patientData) => {
     //   .text(endText, { align: 'center' });
 
     pdfDoc.end();
-    
-    writeStream.on('finish', () => resolve(fileName));
-    writeStream.on('error', (err) => reject(err));
+
+    writeStream.on("finish", () => resolve(fileName));
+    writeStream.on("error", (err) => reject(err));
   });
 };
 
 function formatDateToDDMMYYYY(dateString) {
-  if (!dateString) return '';
+  if (!dateString) return "";
   const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 }
@@ -643,9 +714,9 @@ const generateInvoicePDF = async (invoice) => {
         const leftMargin = pdfDoc.page.margins.left;
         pdfDoc
           .fontSize(12)
-          .font('Helvetica-Bold')
+          .font("Helvetica-Bold")
           .text(`${label}:`, leftMargin, pdfDoc.y, { continued: true })
-          .font('Helvetica')
+          .font("Helvetica")
           .text(` ${value}`)
           .moveDown(0.5);
       }
@@ -661,47 +732,79 @@ const generateInvoicePDF = async (invoice) => {
         pdfDoc
           .moveTo(leftMargin, pdfDoc.y)
           .lineTo(pageWidth - rightMargin, pdfDoc.y)
-          .strokeColor('#AAAAAA')
+          .strokeColor("#AAAAAA")
           .stroke();
 
         pdfDoc.moveDown(0.5);
 
         pdfDoc
           .fontSize(12)
-          .font('Helvetica-Bold')
-          .text('Service Type', leftMargin, pdfDoc.y, { width: columnWidth, align: 'left' })
-          .text('Quantity', leftMargin + columnWidth * 2, pdfDoc.y-14, { width: columnWidth, align: 'center' })
-          .text('Unit Price', leftMargin + columnWidth * 3, pdfDoc.y-14, { width: columnWidth, align: 'center' })
-          .text('Discount', leftMargin + columnWidth * 4, pdfDoc.y-14, { width: columnWidth, align: 'center' })
-          .text('Total', leftMargin + columnWidth * 5, pdfDoc.y-14, { width: columnWidth, align: 'center' });
+          .font("Helvetica-Bold")
+          .text("Service Type", leftMargin, pdfDoc.y, {
+            width: columnWidth,
+            align: "left",
+          })
+          .text("Quantity", leftMargin + columnWidth * 2, pdfDoc.y - 14, {
+            width: columnWidth,
+            align: "center",
+          })
+          .text("Unit Price", leftMargin + columnWidth * 3, pdfDoc.y - 14, {
+            width: columnWidth,
+            align: "center",
+          })
+          .text("Discount", leftMargin + columnWidth * 4, pdfDoc.y - 14, {
+            width: columnWidth,
+            align: "center",
+          })
+          .text("Total", leftMargin + columnWidth * 5, pdfDoc.y - 14, {
+            width: columnWidth,
+            align: "center",
+          });
 
         pdfDoc.moveDown(0.5);
         const underlineY = pdfDoc.y;
         pdfDoc
           .moveTo(leftMargin, underlineY)
           .lineTo(pageWidth - rightMargin, underlineY)
-          .strokeColor('#AAAAAA')
+          .strokeColor("#AAAAAA")
           .stroke();
 
         pdfDoc.moveDown(1);
       }
 
-      const totalAmount = parseInt(invoice.amount) * parseInt(invoice.quantity) - parseInt(invoice.discount);
+      const totalAmount =
+        parseInt(invoice.amount) * parseInt(invoice.quantity) -
+        parseInt(invoice.discount);
 
       pdfDoc
         .fontSize(12)
-        .font('Helvetica')
-        .text(`${index}) ${invoice.service}`, leftMargin, pdfDoc.y, { width: columnWidth, align: 'left' })
-        .text(invoice.quantity, leftMargin + columnWidth * 2, pdfDoc.y - 14, { width: columnWidth, align: 'center' })
-        .text(invoice.amount, leftMargin + columnWidth * 3, pdfDoc.y - 14, { width: columnWidth, align: 'center' })
-        .text(invoice.discount, leftMargin + columnWidth * 4, pdfDoc.y - 14, { width: columnWidth, align: 'center' })
-        .text(totalAmount, leftMargin + columnWidth * 5, pdfDoc.y - 14, { width: columnWidth, align: 'center' });
+        .font("Helvetica")
+        .text(`${index}) ${invoice.service}`, leftMargin, pdfDoc.y, {
+          width: columnWidth,
+          align: "left",
+        })
+        .text(invoice.quantity, leftMargin + columnWidth * 2, pdfDoc.y - 14, {
+          width: columnWidth,
+          align: "center",
+        })
+        .text(invoice.amount, leftMargin + columnWidth * 3, pdfDoc.y - 14, {
+          width: columnWidth,
+          align: "center",
+        })
+        .text(invoice.discount, leftMargin + columnWidth * 4, pdfDoc.y - 14, {
+          width: columnWidth,
+          align: "center",
+        })
+        .text(totalAmount, leftMargin + columnWidth * 5, pdfDoc.y - 14, {
+          width: columnWidth,
+          align: "center",
+        });
 
       const underlineY = pdfDoc.y;
       pdfDoc
         .moveTo(leftMargin, underlineY)
         .lineTo(pageWidth - rightMargin, underlineY)
-        .strokeColor('#AAAAAA')
+        .strokeColor("#AAAAAA")
         .stroke();
 
       pdfDoc.moveDown(1);
@@ -710,7 +813,7 @@ const generateInvoicePDF = async (invoice) => {
     const pdfDoc = new PDFDocument({ margin: 30 });
     pdfDoc.moveDown(10);
 
-    const publicFolder = path.join(__dirname, '../public', 'invoices');
+    const publicFolder = path.join(__dirname, "../public", "invoices");
     const fileName = `invoice_${invoice._id}.pdf`;
     const filePath = path.join(publicFolder, fileName);
 
@@ -727,12 +830,12 @@ const generateInvoicePDF = async (invoice) => {
     const rightMargin = pdfDoc.page.margins.right;
 
     const createdAtDate = new Date();
-    const rightText = new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const rightText = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: true,
     }).format(createdAtDate);
     const rightTextWidth = pdfDoc.widthOfString(rightText);
@@ -740,72 +843,83 @@ const generateInvoicePDF = async (invoice) => {
 
     pdfDoc
       .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Billed To: ', leftMargin, currentY)
-      .font('Helvetica')
-      .text(rightText, pageWidth - rightMargin - rightTextWidth - 300, currentY, { align: 'right' })
+      .font("Helvetica-Bold")
+      .text("Billed To: ", leftMargin, currentY)
+      .font("Helvetica")
+      .text(
+        rightText,
+        pageWidth - rightMargin - rightTextWidth - 300,
+        currentY,
+        { align: "right" }
+      )
       .moveDown(0.5);
 
     pdfDoc
       .fontSize(12)
-      .font('Helvetica')
+      .font("Helvetica")
       .text(invoice.name, leftMargin, pdfDoc.y);
 
     pdfDoc
       .fontSize(12)
-      .font('Helvetica')
+      .font("Helvetica")
       .text(invoice.phone, leftMargin, pdfDoc.y)
       .moveDown(1);
 
-    addFieldStylish('Payment Status', invoice.paymentStatus);
-    addFieldStylish('Payment Mode', invoice.paymentMode);
-    addFieldStylish('Patient Note', invoice.patientNote);
+    addFieldStylish("Payment Status", invoice.paymentStatus);
+    addFieldStylish("Payment Mode", invoice.paymentMode);
+    addFieldStylish("Patient Note", invoice.patientNote);
     pdfDoc.moveDown();
 
     let subTotal = 0;
     if (invoice.items && invoice.items.length > 0) {
       invoice.items.forEach((invoice, index) => {
         if (invoice.quantity && invoice.amount) {
-          subTotal += parseInt(invoice.amount) * parseInt(invoice.quantity) - parseInt(invoice.discount);
+          subTotal +=
+            parseInt(invoice.amount) * parseInt(invoice.quantity) -
+            parseInt(invoice.discount);
           addInvoiceEntry(index + 1, invoice);
         }
       });
     } else {
       pdfDoc
         .fontSize(12)
-        .font('Helvetica')
-        .text('No medicines prescribed.')
+        .font("Helvetica")
+        .text("No medicines prescribed.")
         .moveDown(1);
     }
 
     const rm = pdfDoc.page.margins.right;
     pdfDoc
       .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Subtotal: ', rm + 390, pdfDoc.y, { continued: true })
-      .font('Helvetica')
+      .font("Helvetica-Bold")
+      .text("Subtotal: ", rm + 390, pdfDoc.y, { continued: true })
+      .font("Helvetica")
       .text(subTotal, rm + 438, pdfDoc.y)
       .moveDown(0.5);
 
     pdfDoc
       .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Additional Discount: ', rm + 325, pdfDoc.y, { continued: true })
-      .font('Helvetica')
+      .font("Helvetica-Bold")
+      .text("Additional Discount: ", rm + 325, pdfDoc.y, { continued: true })
+      .font("Helvetica")
       .text(invoice.additionalDiscountAmount, rm + 373, pdfDoc.y)
       .moveDown(0.5);
 
     pdfDoc
       .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Total Amount: ', rm + 362, pdfDoc.y, { continued: true })
-      .font('Helvetica')
-      .text(subTotal - parseInt(invoice.additionalDiscountAmount), rm + 410, pdfDoc.y)
+      .font("Helvetica-Bold")
+      .text("Total Amount: ", rm + 362, pdfDoc.y, { continued: true })
+      .font("Helvetica")
+      .text(
+        subTotal - parseInt(invoice.additionalDiscountAmount),
+        rm + 410,
+        pdfDoc.y
+      )
       .moveDown(0.5);
 
     pdfDoc.end();
-    writeStream.on('finish', () => resolve(filePath));
-    writeStream.on('error', (err) => reject(err));
+    writeStream.on("finish", () => resolve(filePath));
+    writeStream.on("error", (err) => reject(err));
   });
 };
 

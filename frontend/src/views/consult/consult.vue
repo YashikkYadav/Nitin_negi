@@ -1348,7 +1348,7 @@
               <v-icon color="blue">mdi-eye</v-icon>
             </v-btn>
           </v-card-title>
-          <v-card-text>
+          <v-card-text>     
             <img :src="record.fileUrl" alt="Health Record" style="width: 250px;  object-fit: cover;" />
           </v-card-text>
         </v-card>
