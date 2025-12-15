@@ -19,6 +19,8 @@
             <v-tab value="all">All Patients</v-tab>
             <v-tab value="New">New</v-tab>
             <v-tab value="Followup">Followup</v-tab>
+            <v-tab value="RGHS">RGHS</v-tab>
+            <v-tab value="CASH">CASH</v-tab>
         </v-tabs>
 
         <!-- Data Table -->
@@ -35,8 +37,13 @@
                     </tr>
                 </template>
                 <template v-slot:[`item.Tags`]="{ item }">
-                    <v-chip v-if="item.Tags" :color="getTagColor(item.Tags)">
+                    <v-chip v-if="item.Tags && item.Tags !== ''" :color="getTagColor(item.Tags)">
                         {{ item.Tags }}
+                    </v-chip>
+                </template>
+                <template v-slot:[`item.PaymentCategory`]="{ item }">
+                    <v-chip v-if="item.PaymentCategory && item.PaymentCategory !== ''" :color="getPaymentColor(item.PaymentCategory)">
+                        {{ item.PaymentCategory }}
                     </v-chip>
                 </template>
                 <template v-slot:[`item.action`]="{ item }">
@@ -99,6 +106,7 @@ export default {
                 { key: "Phone", title: "Phone" },
                 { key: "Date", title: "Last Visit" },
                 { key: "Tags", title: "Category" },
+                { key: "PaymentCategory", title: "Payment" },
                 { key: "action", title: "Action", sortable: false },
             ],
             debouncedSearch: null,
@@ -120,12 +128,13 @@ export default {
             if (res) {
                 this.isLoading = false;
                 this.patients = res.patient.map((patient) => ({
-                    id: patient.patientId?._id,
-                    UID: patient.patientId?.uid,
-                    Name: patient.patientId?.fullName,
-                    Phone: patient.patientId?.phoneNumber,
-                    Date: new Date(patient?.updatedAt).toLocaleDateString('en-GB'),
-                    Tags: patient.patientId?.tags,
+                    id: patient.patientId?._id || '',
+                    UID: patient.patientId?.uid || '',
+                    Name: patient.patientId?.fullName || '',
+                    Phone: patient.patientId?.phoneNumber || '',
+                    Date: patient?.updatedAt ? new Date(patient.updatedAt).toLocaleDateString('en-GB') : '',
+                    Tags: patient.patientId?.tags || '',
+                    PaymentCategory: patient.patientId?.paymentCategory?.toUpperCase() || '', // Add payment category
                     Action: "",
                 }));
 
@@ -143,7 +152,19 @@ export default {
             if (this.categoryFilter === "all") {
                 this.filteredPatients = this.patients;
             } else {
-                this.filteredPatients = this.patients.filter(patient => patient.Tags === this.categoryFilter);
+                // Check if filtering by payment category (RGSH or CASH)
+                if (this.categoryFilter === "RGHS" || this.categoryFilter === "CASH") {
+                    this.filteredPatients = this.patients.filter(patient => 
+                        patient.PaymentCategory && 
+                        patient.PaymentCategory.toUpperCase() === this.categoryFilter
+                    );
+                } else {
+                    // Filter by regular tags
+                    this.filteredPatients = this.patients.filter(patient => 
+                        patient.Tags && 
+                        patient.Tags === this.categoryFilter
+                    );
+                }
             }
         },
 
@@ -154,8 +175,23 @@ export default {
                     return 'green';
                 case 'Followup':
                     return 'orange';
+                case 'RGHS':
+                    return 'blue';
+                case 'CASH':
+                    return 'purple';
                 default:
                     return 'red';
+            }
+        },
+        // Get color based on payment category value
+        getPaymentColor(paymentCategory) {
+            switch(paymentCategory) {
+                case 'RGHS':
+                    return 'blue';
+                case 'CASH':
+                    return 'purple';
+                default:
+                    return 'grey';
             }
         },
 

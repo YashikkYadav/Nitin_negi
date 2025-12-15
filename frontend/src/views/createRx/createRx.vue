@@ -32,6 +32,8 @@
             <v-tab value="all">All Patients</v-tab>
             <v-tab value="New">New</v-tab>
             <v-tab value="Followup">Followup</v-tab>
+             <v-tab value="RGHS">RGHS</v-tab>
+            <v-tab value="CASH">CASH</v-tab>
         </v-tabs>
 
         <!-- Data Table -->
@@ -162,20 +164,36 @@ export default {
             }
         },
         // Apply category filter to patients
-        applyCategoryFilter() {
+         applyCategoryFilter() {
             if (this.categoryFilter === "all") {
                 this.filteredPatients = this.patients;
             } else {
-                this.filteredPatients = this.patients.filter(patient => patient.Tags === this.categoryFilter);
+                // Check if filtering by payment category (RGSH or CASH)
+                if (this.categoryFilter === "RGHS" || this.categoryFilter === "CASH") {
+                    this.filteredPatients = this.patients.filter(patient => 
+                        patient.PaymentCategory && 
+                        patient.PaymentCategory.toUpperCase() === this.categoryFilter
+                    );
+                } else {
+                    // Filter by regular tags
+                    this.filteredPatients = this.patients.filter(patient => 
+                        patient.Tags && 
+                        patient.Tags === this.categoryFilter
+                    );
+                }
             }
         },
         // Get color based on tag value
-        getTagColor(tag) {
+       getTagColor(tag) {
             switch(tag) {
                 case 'New':
                     return 'green';
                 case 'Followup':
                     return 'orange';
+                case 'RGHS':
+                    return 'blue';
+                case 'CASH':
+                    return 'purple';
                 default:
                     return 'red';
             }
