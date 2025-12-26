@@ -54,18 +54,7 @@
           </v-row>
 
           <!-- DATE OF SURGERY -->
-          <v-row>
-            <v-col cols="12">
-              <v-text-field
-                v-model="dateOfSurgery"
-                label="Date of Surgery"
-                type="date"
-                :rules="[rules.required]"
-                variant="outlined"
-                dense
-              />
-            </v-col>
-          </v-row>
+      
 
           <!-- STATUS -->
           <v-row>
@@ -131,7 +120,6 @@ export default {
     const selectedPatient = ref(null);
     const patients = ref([]);
     const phoneNumber = ref('');
-    const dateOfSurgery = ref('');
     const status = ref('pending');
     const notes = ref('');
     const statusOptions = ref([
@@ -205,7 +193,6 @@ export default {
     watch(() => props.entry, (newEntry) => {
       if (newEntry && props.isEditModel) {
         // Pre-fill the form with existing data
-        dateOfSurgery.value = newEntry.dateOfSurgery ? new Date(newEntry.dateOfSurgery).toISOString().split('T')[0] : '';
         status.value = newEntry.status || 'pending';
         notes.value = newEntry.notes || '';
         
@@ -270,7 +257,6 @@ export default {
       try {
         const payload = {
           patientId: selectedPatient.value.value._id,
-          dateOfSurgery: dateOfSurgery.value,
           status: status.value,
           notes: notes.value
         };
@@ -293,7 +279,7 @@ export default {
         resetFields();
         emit("close-dialog");
       } catch (error) {
-        console.error("Error saving tentative surgery:", error);
+        console.log("Error saving tentative surgery:", error);
         uiStore.openNotificationMessage(error?.response?.data?.message || "Failed to save tentative surgery", "", "error");
       } finally {
         saving.value = false;
@@ -304,7 +290,6 @@ export default {
     const resetFields = () => {
       selectedPatient.value = null;
       phoneNumber.value = '';
-      dateOfSurgery.value = '';
       status.value = 'pending';
       notes.value = '';
       form.value?.resetValidation();
@@ -321,7 +306,6 @@ export default {
       selectedPatient,
       patients,
       phoneNumber,
-      dateOfSurgery,
       status,
       notes,
       statusOptions,

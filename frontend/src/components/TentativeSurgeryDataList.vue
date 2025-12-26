@@ -19,31 +19,7 @@
         <!-- intentionally blank: tabs live in table header -->
       </v-col>
 
-      <v-col cols="12" md="2" class="mb-2 md:mb-0">
-        <v-text-field
-          v-model="dateFrom"
-          label="Date From"
-          type="date"
-          variant="solo"
-          class="rounded-full search-bar max-w-[350px] bg-[#f5f6fa]"
-          style="background:#f5f6fa;"
-          dense
-          clearable
-        />
-      </v-col>
 
-      <v-col cols="12" md="2" class="mb-2 md:mb-0">
-        <v-text-field
-          v-model="dateTo"
-          label="Date To"
-          type="date"
-          variant="solo"
-          class="rounded-full search-bar max-w-[350px] bg-[#f5f6fa]"
-          style="background:#f5f6fa;"
-          dense
-          clearable
-        />
-      </v-col>
     </v-row>
 
     <!-- Data Table Card -->
@@ -106,9 +82,6 @@
           <span>{{ item.patientId?.gender || '-' }}</span>
         </template>
 
-        <template v-slot:[`item.dateOfSurgery`]="{ item }">
-          <span class="cell-date">{{ formatDate(item.dateOfSurgery) }}</span>
-        </template>
 
         <template v-slot:[`item.status`]="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark small>
@@ -150,8 +123,7 @@ export default {
     ];
 
     const statusFilter = ref('all');
-    const dateFrom = ref('');
-    const dateTo = ref('');
+
     const search = ref('');
     const tentativeSurgeryData = ref([]);
     const loading = ref(false);
@@ -164,7 +136,7 @@ export default {
         { key: 'patientName', title: 'Patient Name' },
         { key: 'phoneNumber', title: 'Phone Number' },
         { key: 'gender', title: 'Gender' },
-        { key: 'dateOfSurgery', title: 'Date of Surgery' },
+
         { key: 'status', title: 'Status' }
       ];
       
@@ -195,24 +167,10 @@ export default {
       return tentativeSurgeryData.value.filter(item => (item.status || '').toString().toLowerCase() === statusFilter.value);
     });
 
-    const dateFilteredData = computed(() => {
-      if (!dateFrom.value && !dateTo.value) return filteredTentativeSurgeryData.value;
-      return filteredTentativeSurgeryData.value.filter(item => {
-        const date = item.dateOfSurgery ? new Date(item.dateOfSurgery) : null;
-        const fromDate = dateFrom.value ? new Date(dateFrom.value) : null;
-        const toDate = dateTo.value ? new Date(dateTo.value) : null;
-        if (!date) return false;
-        if (fromDate && toDate) return date >= fromDate && date <= toDate;
-        if (fromDate) return date >= fromDate;
-        if (toDate) return date <= toDate;
-        return true;
-      });
-    });
-
     const searchedTentativeSurgeryData = computed(() => {
-      if (!search.value) return dateFilteredData.value;
+      if (!search.value) return filteredTentativeSurgeryData.value;
       const searchTerm = search.value.toLowerCase().trim();
-      return dateFilteredData.value.filter(item =>
+      return filteredTentativeSurgeryData.value.filter(item =>
         (item.patientId?.fullName && item.patientId.fullName.toLowerCase().includes(searchTerm)) ||
         (item.patientId?.phoneNumber && item.patientId.phoneNumber.toString().includes(searchTerm)) ||
         (item.patientId?.uid && item.patientId.uid.toLowerCase().includes(searchTerm)) ||
@@ -222,9 +180,10 @@ export default {
     
     const sortedTentativeSurgeryData = computed(() =>
       [...searchedTentativeSurgeryData.value].sort((a, b) => {
-        const da = a.dateOfSurgery ? new Date(a.dateOfSurgery) : new Date(0);
-        const db = b.dateOfSurgery ? new Date(b.dateOfSurgery) : new Date(0);
-        return db - da;
+        // Sort by creation date if available, otherwise by ID
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
       })
     );
 
@@ -238,7 +197,7 @@ export default {
     });
 
     watch(search, () => { currentPage.value = 1; });
-    watch([statusFilter, dateFrom, dateTo], () => { currentPage.value = 1; });
+    watch([statusFilter], () => { currentPage.value = 1; });
 
     onMounted(() => {
       fetchTentativeSurgeries();
@@ -272,16 +231,12 @@ export default {
 
     const clearAllFilters = () => {
       statusFilter.value = 'all';
-      dateFrom.value = '';
-      dateTo.value = '';
       search.value = '';
       nextTick(() => updateUnderline());
     };
 
     const hasActiveFilters = computed(() =>
       statusFilter.value !== 'all' ||
-      dateFrom.value ||
-      dateTo.value ||
       search.value
     );
 
@@ -342,8 +297,6 @@ export default {
     return {
       headers,
       statusFilter,
-      dateFrom,
-      dateTo,
       search,
       loading,
       currentPage,

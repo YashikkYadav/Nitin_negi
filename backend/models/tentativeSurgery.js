@@ -9,7 +9,7 @@ const TentativeSurgerySchema = new mongoose.Schema(
     },
     dateOfSurgery: {
       type: Date,
-      required: true,
+      required: false,
     },
     status: {
       type: String,
